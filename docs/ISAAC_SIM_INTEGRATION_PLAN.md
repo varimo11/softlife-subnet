@@ -229,8 +229,10 @@ That keeps the validator handoff, physics artifact schema, and scoring bridge
 stable while the execution backend advances from stage replay to Unitree robot
 control.
 
-The Unitree path now has its own controller mapper. The remaining implementation
-is the concrete backend behind `UnitreeIsaacBackend`. That backend should:
+The Unitree path now has its own controller mapper plus a
+`SimulatedUnitreeBackend` for dependency-free dry runs. The remaining real
+implementation is the concrete Isaac/Unitree backend behind
+`UnitreeIsaacBackend`. That backend should:
 
 - open or receive an Isaac Lab environment/scene;
 - resolve target frames and object prims from the bundle manifest;

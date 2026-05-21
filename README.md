@@ -55,7 +55,7 @@ The tests cover deterministic room generation, deterministic replay logs, hidden
 For sandboxed macOS Python bytecode compilation:
 
 ```bash
-env PYTHONPYCACHEPREFIX=/private/tmp/softlife_pycache python3 -m compileall -q softlife_subnet tests
+env PYTHONPYCACHEPREFIX=/private/tmp/softlife_pycache python3 -m compileall -q softlife_subnet tests integrations
 ```
 
 ## Export An Isaac Replay Bundle
@@ -76,20 +76,23 @@ Offline artifact round-trip check:
 python3 integrations/isaac_lab/scripts/export_mock_physics_artifact.py --seed 42 --out /tmp/softlife_seed42_artifact.json --pretty
 python3 integrations/isaac_lab/scripts/score_physics_artifact.py --bundle /tmp/softlife_seed42_bundle.json --artifact /tmp/softlife_seed42_artifact.json --seed 42 --pretty
 python3 integrations/isaac_lab/scripts/run_isaac_stage_replay.py --bundle /tmp/softlife_seed42_bundle.json --out-artifact /tmp/softlife_seed42_stage_artifact.json --dry-run
+python3 integrations/isaac_lab/scripts/run_unitree_isaac_replay.py --bundle /tmp/softlife_seed42_bundle.json --out-artifact /tmp/softlife_seed42_unitree_artifact.json --dry-run
 ```
 
 On an Isaac Sim workstation, run `run_isaac_stage_replay.py` with Isaac Sim's
 Python instead of `--dry-run` to load the scene, apply compiled commands on the
 USD stage, optionally capture viewport frames, and write the validator artifact.
 
-The Unitree controller path is wired as a backend contract:
+The Unitree controller path has a local dry-run backend for validating command
+mapping and artifact ingestion without Isaac physics. On an Isaac workstation,
+run the same script with Isaac Sim's Python and omit `--dry-run`:
 
 ```bash
 ./python.sh integrations/isaac_lab/scripts/run_unitree_isaac_replay.py --bundle /tmp/softlife_seed42_bundle.json --out-artifact /tmp/softlife_seed42_unitree_artifact.json
 ```
 
-That command is ready for an implementation of `UnitreeIsaacBackend`, which is
-where Isaac Lab robot/env handles and Unitree gripper/control APIs plug in.
+The non-dry-run command still requires a concrete `UnitreeIsaacBackend`, which
+is where Isaac Lab robot/env handles and Unitree gripper/control APIs plug in.
 
 ## Docs
 

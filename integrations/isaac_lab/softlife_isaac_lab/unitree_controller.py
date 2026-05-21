@@ -4,7 +4,10 @@ import importlib.util
 from dataclasses import dataclass
 from typing import Any, Mapping, Protocol, runtime_checkable
 
-from integrations.isaac_lab.softlife_isaac_lab.controllers import CommandExecutionResult
+from integrations.isaac_lab.softlife_isaac_lab.controllers import (
+    CommandExecutionResult,
+    StageReplayState,
+)
 from softlife_subnet.physics_artifacts import (
     CleanlinessMeasurement,
     CollisionEvent,
@@ -108,6 +111,159 @@ class UnitreeIsaacBackend(Protocol):
 
     def snapshot(self) -> BackendSnapshot:
         """Return validator-owned final physics truth."""
+
+
+class SimulatedUnitreeBackend:
+    """Deterministic backend for exercising the Unitree command path locally.
+
+    This backend uses the same symbolic state transition model as the
+    stage-level bridge. It is useful for validating command mapping and artifact
+    ingestion on machines without Isaac/Unitree dependencies, but it does not
+    run Isaac physics or Unitree articulation control.
+    """
+
+    backend_name = "simulated_unitree_backend_v1"
+
+    def __init__(self, state: StageReplayState) -> None:
+        self.state = state
+
+    @classmethod
+    def from_bundle(cls, bundle_payload: Mapping[str, Any]) -> "SimulatedUnitreeBackend":
+        return cls(StageReplayState.from_bundle(bundle_payload))
+
+    def navigate_to_frame(
+        self,
+        *,
+        target_frame: str,
+        zone: str,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        return self._apply(
+            {
+                "command_type": "navigate_to_frame",
+                "target_frame": target_frame,
+                "zone": zone,
+            },
+            sim_steps=sim_steps,
+        )
+
+    def approach_object(
+        self,
+        *,
+        object_id: str,
+        object_prim: str,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        return self._apply(
+            {
+                "command_type": "approach_object",
+                "target_frame": object_prim,
+                "object_id": object_id,
+            },
+            sim_steps=sim_steps,
+        )
+
+    def grasp_object(
+        self,
+        *,
+        object_id: str,
+        object_prim: str,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        return self._apply(
+            {
+                "command_type": "grasp_object",
+                "target_frame": object_prim,
+                "object_id": object_id,
+            },
+            sim_steps=sim_steps,
+        )
+
+    def release_object(
+        self,
+        *,
+        object_id: str,
+        target_frame: str,
+        zone: str,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        return self._apply(
+            {
+                "command_type": "release_object",
+                "target_frame": target_frame,
+                "object_id": object_id,
+                "zone": zone,
+            },
+            sim_steps=sim_steps,
+        )
+
+    def drop_in_receptacle(
+        self,
+        *,
+        object_id: str,
+        target_frame: str,
+        zone: str,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        return self._apply(
+            {
+                "command_type": "drop_in_receptacle",
+                "target_frame": target_frame,
+                "object_id": object_id,
+                "zone": zone,
+            },
+            sim_steps=sim_steps,
+        )
+
+    def wipe_surface(
+        self,
+        *,
+        surface_prim: str,
+        zone: str,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        return self._apply(
+            {
+                "command_type": "wipe_surface",
+                "target_frame": surface_prim,
+                "zone": zone,
+            },
+            sim_steps=sim_steps,
+        )
+
+    def hold_position(self, *, sim_steps: int) -> BackendCommandResult:
+        return self._apply({"command_type": "hold_position"}, sim_steps=sim_steps)
+
+    def snapshot(self) -> BackendSnapshot:
+        return BackendSnapshot(
+            room_id=self.state.room_id,
+            scene_root=self.state.scene_root,
+            sim_seed=self.state.sim_seed,
+            robot_zone=self.state.robot_zone,
+            object_states=tuple(
+                self.state.object_state(object_id)
+                for object_id in sorted(self.state.object_zones)
+            ),
+            cleanliness=tuple(
+                self.state.cleanliness(zone)
+                for zone in sorted(self.state.surface_dirt_after)
+            ),
+        )
+
+    def _apply(
+        self,
+        command: Mapping[str, Any],
+        *,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        ok, message = self.state.apply_command(command)
+        return BackendCommandResult(
+            ok=ok,
+            message=message,
+            robot_zone_after=self.state.robot_zone,
+            held_object_after=self.state.held_object_id,
+            sim_steps=sim_steps,
+        )
 
 
 class UnitreeIsaacReplayController:

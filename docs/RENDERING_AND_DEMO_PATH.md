@@ -108,11 +108,12 @@ Hidden validator mode must not show:
 
 After the current alignment work, the next credible milestones are:
 
-1. Replace stage-level object motion with a real Unitree/Isaac controller.
-2. Replace bootstrap cubes with real USD hotel-room and object assets.
-3. Load one hotel-room USD scene with a Unitree-compatible robot.
-4. Execute bundle `compiled_commands` through the Isaac controller.
-5. Record one successful Isaac replay video.
-6. Feed the final physics truth back into Soft Life `ReplayResult`.
-7. Add a public playground mode with videos and a hidden eval mode without leaks.
-8. Only then add ROS2/DDS execution for real robot demos.
+1. Use the Unitree dry-run path to regression-test compiled command bundles.
+2. Replace stage-level object motion with a real Unitree/Isaac controller.
+3. Replace bootstrap cubes with real USD hotel-room and object assets.
+4. Load one hotel-room USD scene with a Unitree-compatible robot.
+5. Execute bundle `compiled_commands` through the Isaac controller.
+6. Record one successful Isaac replay video.
+7. Feed the final physics truth back into Soft Life `ReplayResult`.
+8. Add a public playground mode with videos and a hidden eval mode without leaks.
+9. Only then add ROS2/DDS execution for real robot demos.

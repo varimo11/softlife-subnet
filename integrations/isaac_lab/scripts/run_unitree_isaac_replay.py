@@ -12,6 +12,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from integrations.isaac_lab.softlife_isaac_lab.unitree_controller import (  # noqa: E402
+    SimulatedUnitreeBackend,
     UnitreeIsaacControllerUnavailable,
     UnitreeIsaacReplayController,
 )
@@ -25,11 +26,23 @@ def main() -> None:
     parser.add_argument("--bundle", required=True, help="Validator-private replay bundle JSON.")
     parser.add_argument("--out-artifact", required=True, help="Output physics artifact JSON path.")
     parser.add_argument("--sim-steps", type=int, default=12, help="Simulation steps per command.")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help=(
+            "Use the deterministic simulated Unitree backend. This validates the "
+            "controller/artifact path without Isaac physics or Unitree runtime."
+        ),
+    )
     args = parser.parse_args()
 
     bundle_payload = load_bundle_payload(args.bundle)
+    backend = SimulatedUnitreeBackend.from_bundle(bundle_payload) if args.dry_run else None
     try:
-        controller = UnitreeIsaacReplayController.from_bundle(bundle_payload)
+        controller = UnitreeIsaacReplayController.from_bundle(
+            bundle_payload,
+            backend=backend,
+        )
     except UnitreeIsaacControllerUnavailable as exc:
         print(f"Unitree/Isaac backend unavailable: {exc}", file=sys.stderr)
         raise SystemExit(2) from exc
@@ -38,7 +51,11 @@ def main() -> None:
         controller.execute(command, sim_steps=args.sim_steps)
 
     artifact = controller.to_artifact(
-        adapter_name="unitree_isaac_replay_v1",
+        adapter_name=(
+            "unitree_isaac_replay_dry_run_v1"
+            if args.dry_run
+            else "unitree_isaac_replay_v1"
+        ),
         action_count=len(commands),
         step_count=len(commands) * args.sim_steps,
     )
@@ -49,6 +66,8 @@ def main() -> None:
         encoding="utf-8",
     )
     print(f"Wrote Unitree/Isaac physics artifact: {output_path}")
+    if args.dry_run:
+        print("Dry run: used simulated Unitree backend; no Isaac physics was executed.")
     print(f"Artifact hash: {artifact.artifact_hash}")
 
 

@@ -16,6 +16,8 @@ Implemented here:
   ready to be replaced by a Unitree/Isaac controller.
 - `UnitreeIsaacReplayController` command mapper plus `UnitreeIsaacBackend`
   protocol for real Isaac Lab / Unitree execution.
+- `SimulatedUnitreeBackend` for dependency-free dry runs of the Unitree command
+  path and artifact scoring contract.
 - Mock physics artifact export for offline schema testing.
 - Physics artifact scoring back into Soft Life readiness.
 - Deterministic scene manifest and compiled robot commands.
@@ -58,11 +60,14 @@ not the final high-fidelity hotel room.
 ```bash
 python3 integrations/isaac_lab/scripts/export_mock_physics_artifact.py --seed 42 --out /tmp/softlife_seed42_artifact.json --pretty
 python3 integrations/isaac_lab/scripts/score_physics_artifact.py --bundle /tmp/softlife_seed42_bundle.json --artifact /tmp/softlife_seed42_artifact.json --seed 42 --pretty
+python3 integrations/isaac_lab/scripts/run_unitree_isaac_replay.py --bundle /tmp/softlife_seed42_bundle.json --out-artifact /tmp/softlife_seed42_unitree_artifact.json --dry-run
 ```
 
 The first command emits the exact `softlife.physics_replay.v1` schema that the
 real Isaac task must return. The second command ingests that artifact into the
-validator scoring path.
+validator scoring path. The Unitree dry run executes compiled commands through
+`UnitreeIsaacReplayController` and `SimulatedUnitreeBackend`; it validates the
+controller/artifact boundary, but it does not run Isaac physics.
 
 ## Run The Stage-Level Isaac Sim Replay
 
@@ -108,6 +113,15 @@ The intended runtime command is:
 
 Today this fails clearly until a concrete backend satisfying
 `UnitreeIsaacBackend` is configured.
+
+For a local dependency-free check of the Unitree command path:
+
+```bash
+python3 integrations/isaac_lab/scripts/run_unitree_isaac_replay.py \
+  --bundle /tmp/softlife_seed42_bundle.json \
+  --out-artifact /tmp/softlife_seed42_unitree_artifact.json \
+  --dry-run
+```
 
 ## First Isaac Demo Target
 

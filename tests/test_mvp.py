@@ -21,6 +21,7 @@ from integrations.isaac_lab.softlife_isaac_lab.controllers import (
 from integrations.isaac_lab.softlife_isaac_lab.unitree_controller import (
     BackendCommandResult,
     BackendSnapshot,
+    SimulatedUnitreeBackend,
     UnitreeIsaacBackend,
     UnitreeIsaacControllerUnavailable,
     UnitreeIsaacReplayController,
@@ -316,6 +317,42 @@ class MvpTests(unittest.TestCase):
         self.assertEqual(controller.command_log[1]["held_object_after"], "pillow_1")
         self.assertEqual(artifact.adapter_name, "unitree_test")
         self.assertEqual(artifact.object_states[0].zone, "bed")
+
+    def test_simulated_unitree_backend_replays_full_bundle_artifact(self) -> None:
+        bundle = build_isaac_replay_bundle(seed=42).to_wire()
+        backend = SimulatedUnitreeBackend.from_bundle(bundle)
+        controller = UnitreeIsaacReplayController.from_bundle(bundle, backend=backend)
+
+        for command in bundle["compiled_commands"]:
+            controller.execute(command, sim_steps=12)
+        artifact = controller.to_artifact(
+            adapter_name="unitree_isaac_replay_dry_run_v1",
+            action_count=len(bundle["compiled_commands"]),
+            step_count=len(bundle["compiled_commands"]) * 12,
+        )
+        room = RoomGenerator().generate(42)
+        trajectory = Trajectory.from_wire(bundle["trajectory"])
+        replay = replay_result_from_physics_artifact(
+            initial_state=room,
+            trajectory=trajectory,
+            artifact=artifact,
+        )
+        score = RoomReadinessScorer().score(replay)
+        object_zones = {item.object_id: item.zone for item in artifact.object_states}
+        surface_dirt = {item.zone: item.dirt_after for item in artifact.cleanliness}
+
+        self.assertIsInstance(backend, UnitreeIsaacBackend)
+        self.assertEqual(artifact.adapter_name, "unitree_isaac_replay_dry_run_v1")
+        self.assertEqual(artifact.action_count, len(bundle["compiled_commands"]))
+        self.assertEqual(artifact.invalid_actions, 0)
+        self.assertEqual(len(artifact.command_log), len(bundle["compiled_commands"]))
+        self.assertEqual(
+            artifact.command_log[0]["backend_name"],
+            "simulated_unitree_backend_v1",
+        )
+        self.assertEqual(object_zones["wrapper_1"], "trash_bin")
+        self.assertEqual(surface_dirt["bed"], 0.0)
+        self.assertEqual(score.readiness, 97.679)
 
     def test_unitree_controller_fails_clearly_without_backend(self) -> None:
         bundle = build_isaac_replay_bundle(seed=42).to_wire()
