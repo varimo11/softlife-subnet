@@ -23,6 +23,9 @@ Current Isaac-aligned scaffolding:
 - `run_isaac_stage_replay.py`: Isaac Sim runtime bridge that loads the stage,
   applies compiled command effects, optionally captures viewport frames, and
   writes a physics artifact.
+- `RobotReplayController`: controller boundary used by the Isaac runner. The
+  current implementation is `StageReplayController`; the next one should be a
+  Unitree/Isaac controller that drives robot articulations and grippers.
 - `score_physics_artifact.py`: ingestion path from Isaac physics truth back into
   the validator scorer.
 - `IsaacSimSimulationAdapter`: optional backend boundary that currently raises a
@@ -205,3 +208,17 @@ Run the current stage-level bridge inside Isaac Sim:
 
 This is not yet robot manipulation. It proves the Isaac runtime path,
 stage loading, command execution, optional frame capture, and artifact return.
+
+## Controller Swap Point
+
+The Isaac runner now depends on `RobotReplayController` rather than hard-coded
+stage mutation. The current `StageReplayController` executes compiled commands
+deterministically by moving USD prims and updating surface dirt attributes. A
+real Isaac controller should implement the same contract:
+
+- `execute(command, sim_steps=...)`
+- `to_artifact(adapter_name=..., action_count=..., step_count=...)`
+
+That keeps the validator handoff, physics artifact schema, and scoring bridge
+stable while the execution backend advances from stage replay to Unitree robot
+control.

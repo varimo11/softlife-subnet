@@ -14,6 +14,10 @@ from integrations.isaac_lab.softlife_isaac_lab.isaac_sim_runner import (
     find_isaac_sim_package,
     run_isaac_sim_stage_replay,
 )
+from integrations.isaac_lab.softlife_isaac_lab.controllers import (
+    RobotReplayController,
+    StageReplayController,
+)
 from integrations.isaac_lab.softlife_isaac_lab.usd_export import render_usda_scene
 from softlife_subnet.actions import Action, ActionType, Trajectory
 from softlife_subnet.artifact_ingest import replay_result_from_physics_artifact
@@ -260,6 +264,24 @@ class MvpTests(unittest.TestCase):
         self.assertEqual(replay.events[0].robot_zone_after, "nightstand")
         self.assertEqual(replay.events[1].held_object_after, "pillow_1")
         self.assertEqual(score.readiness, 97.679)
+
+    def test_stage_replay_controller_satisfies_robot_controller_boundary(self) -> None:
+        bundle = build_isaac_replay_bundle(seed=42).to_wire()
+        controller = StageReplayController.from_bundle(bundle)
+        first_command = bundle["compiled_commands"][0]
+
+        result = controller.execute(first_command, sim_steps=12)
+        artifact = controller.to_artifact(
+            adapter_name="controller_test",
+            action_count=1,
+            step_count=12,
+        )
+
+        self.assertIsInstance(controller, RobotReplayController)
+        self.assertTrue(result.ok)
+        self.assertEqual(result.robot_zone_after, "nightstand")
+        self.assertEqual(controller.command_log[0]["sim_steps"], 12)
+        self.assertEqual(artifact.command_log[0]["message"], "approached pillow_1")
 
     def test_isaac_sim_stage_runner_fails_clearly_without_runtime(self) -> None:
         bundle = build_isaac_replay_bundle(seed=42).to_wire()

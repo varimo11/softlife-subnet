@@ -12,6 +12,8 @@ Implemented here:
 - Lightweight USDA scene export for Isaac/Omniverse inspection.
 - Stage-level Isaac Sim replay runner with lazy `isaacsim` / `omni.isaac.kit`
   imports.
+- `RobotReplayController` boundary with a `StageReplayController` implementation,
+  ready to be replaced by a Unitree/Isaac controller.
 - Mock physics artifact export for offline schema testing.
 - Physics artifact scoring back into Soft Life readiness.
 - Deterministic scene manifest and compiled robot commands.
@@ -86,6 +88,11 @@ prims, advances Isaac Sim, optionally captures viewport frames, and writes the
 same physics artifact schema used by the validator. It is the first runnable
 Isaac bridge; the next step is replacing stage-level object motion with a
 Unitree robot controller and real contact-rich physics.
+
+The replacement point is `RobotReplayController`. A future
+`UnitreeIsaacReplayController` should implement the same `execute(...)` and
+`to_artifact(...)` methods while driving articulations, grippers, contacts,
+camera capture, and collision telemetry instead of directly moving stage prims.
 
 ## First Isaac Demo Target
 
