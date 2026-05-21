@@ -15,6 +15,9 @@ Current Isaac-aligned scaffolding:
 - `HotelRoomSceneManifest`: deterministic symbolic state to USD prim/frame map.
 - `SoftLifeTrajectoryProvider`: Unitree-style action source for replay loops.
 - `CompiledRobotCommand`: robot-oriented primitive compiled from miner actions.
+- `PhysicsReplayArtifact`: validator-private physics truth schema for final object
+  poses, zone membership, collisions, damage, drops, cleanliness, and command logs.
+- `IsaacReplayBundle`: validator-private JSON handoff for an Isaac Lab machine.
 - `IsaacSimSimulationAdapter`: optional backend boundary that currently raises a
   clear dependency error instead of importing Isaac Lab in the lightweight MVP.
 
@@ -110,6 +113,11 @@ Isaac Sim replay should produce:
 
 Hidden logs can be stored by validators. Public logs should be redacted for hidden evaluations.
 
+The concrete schema is `softlife.physics_replay.v1` in
+`softlife_subnet.physics_artifacts`. Isaac should fill this artifact from real
+simulator state, then the validator can convert it into the existing
+`ReplayResult` and scoring pipeline.
+
 ## Scoring From Physics
 
 Room readiness should read final simulator truth:
@@ -154,3 +162,14 @@ Initial Isaac Sim demo target:
 8. UI/CLI shows replay log, score breakdown, leaderboard, and normalized weights.
 
 This demo should prove the adapter boundary, not full autonomy.
+
+## Current Isaac Handoff Command
+
+From the repo root:
+
+```bash
+python3 integrations/isaac_lab/scripts/export_replay_bundle.py --seed 42 --out /tmp/softlife_seed42_bundle.json --pretty
+```
+
+That file is the input contract for the Isaac Lab implementation. It is
+validator-private and must not be sent to miners.

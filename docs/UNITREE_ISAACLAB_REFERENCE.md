@@ -133,7 +133,10 @@ Unitree's structure:
 - `softlife_subnet.robotics.SoftLifeTrajectoryProvider`
 - `softlife_subnet.robotics.CompiledRobotCommand`
 - `softlife_subnet.robotics.HotelRoomSceneManifest`
+- `softlife_subnet.physics_artifacts.PhysicsReplayArtifact`
+- `softlife_subnet.isaac_handoff.IsaacReplayBundle`
 - `softlife_subnet.isaac_adapter.IsaacSimSimulationAdapter`
+- `integrations/isaac_lab/`
 - `docs/ISAAC_TASK_MAPPING.md`
 - `docs/RENDERING_AND_DEMO_PATH.md`
 
@@ -142,11 +145,10 @@ without breaking the current mock physics demo.
 
 ## Suggested Next Milestones
 
-1. Add replay artifact schema: final object poses, zone membership, collisions, damage, cleanliness.
-2. Build a minimal Isaac Lab hotel-room task outside the main lightweight demo.
-3. Render one successful Isaac replay from a fixed validator camera.
-4. Feed Isaac physics truth back into the existing `ReplayResult`.
-5. Only after that, add optional Unitree/DDS bridge support.
+1. Implement the Isaac Lab hotel-room task loop in `integrations/isaac_lab`.
+2. Render one successful Isaac replay from a fixed validator camera.
+3. Feed Isaac physics truth back into the existing `ReplayResult`.
+4. Only after that, add optional Unitree/DDS bridge support.
 
 ## Important Constraints
 

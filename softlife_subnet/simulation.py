@@ -6,6 +6,7 @@ from dataclasses import dataclass, replace
 from typing import Mapping, Protocol, runtime_checkable
 
 from softlife_subnet.actions import Action, ActionType, Trajectory, TrajectoryLike, ensure_trajectory
+from softlife_subnet.physics_artifacts import PhysicsReplayArtifact
 from softlife_subnet.state import (
     HELD_LOCATION,
     EnvironmentState,
@@ -64,6 +65,7 @@ class ReplayResult:
     action_count: int
     replay_hash: str
     adapter_name: str
+    physics_artifact: PhysicsReplayArtifact | None = None
 
     def to_replay_log(self) -> dict[str, object]:
         return {

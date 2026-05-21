@@ -14,6 +14,8 @@ This is not a hotel management app. It is a lightweight evaluation market for em
 - `softlife_subnet.simulation`: `SimulationAdapter`, `MockSimulationAdapter`, and `ReplayResult`.
 - `softlife_subnet.robotics`: Unitree/Isaac-style action provider, command compiler, and scene manifest bridge.
 - `softlife_subnet.isaac_adapter`: optional Isaac Lab adapter stub kept outside the mock backend.
+- `softlife_subnet.physics_artifacts`: validator-private physics truth schema for Isaac/hardware replay.
+- `softlife_subnet.isaac_handoff`: deterministic Isaac replay bundle exporter.
 - `softlife_subnet.scoring`: room readiness scoring.
 - `softlife_subnet.validators`: validator boundary and private challenge storage.
 - `softlife_subnet.miners`: miner interface and baseline heuristic miner.
@@ -56,6 +58,16 @@ For sandboxed macOS Python bytecode compilation:
 env PYTHONPYCACHEPREFIX=/private/tmp/softlife_pycache python3 -m compileall -q softlife_subnet tests
 ```
 
+## Export An Isaac Replay Bundle
+
+```bash
+python3 integrations/isaac_lab/scripts/export_replay_bundle.py --seed 42 --out /tmp/softlife_seed42_bundle.json --pretty
+```
+
+This produces a validator-private JSON bundle for an Isaac Lab workstation:
+hidden room truth, scene manifest, miner trajectory, compiled robot commands,
+and the expected `softlife.physics_replay.v1` artifact schema.
+
 ## Docs
 
 - `docs/THREAT_MODEL.md`: overfitting, invalid action spam, unsafe policies, scoring loopholes, seed leaks, validator manipulation, and replay nondeterminism.
@@ -69,6 +81,7 @@ env PYTHONPYCACHEPREFIX=/private/tmp/softlife_pycache python3 -m compileall -q s
 
 - Implement `IsaacSimSimulationAdapter` behind the existing `SimulationAdapter` protocol.
 - Feed `SoftLifeTrajectoryProvider` commands into an Isaac Lab control loop.
+- Convert Isaac final physics truth into `PhysicsReplayArtifact` and then `ReplayResult`.
 - Replace `Validator` storage/evaluation with a Bittensor validator process.
 - Replace `Miner.solve()` implementations with policy inference, planning, ROS2 action servers, or remote miner RPC.
 - Add richer physics facts to `EnvironmentState` while preserving a reduced `PublicRoomState` for miners.

@@ -23,14 +23,22 @@ This render is not physics. It is a clear frontend view of the subnet protocol.
 
 ## Isaac Lab Render
 
-Once `IsaacSimSimulationAdapter` is implemented, rendering should happen inside
-Isaac Sim/Isaac Lab:
+The current repo can export a validator-private bundle for an Isaac Lab
+workstation:
 
-1. Run the hotel-room Isaac Lab task with rendering enabled for development.
-2. Use headless mode for validator batch scoring.
-3. Capture replay camera streams from fixed validator cameras.
-4. Export MP4 clips or image sequences for public demos.
-5. Store replay artifacts separately from public miner challenge data.
+```bash
+python3 integrations/isaac_lab/scripts/export_replay_bundle.py --seed 42 --out /tmp/softlife_seed42_bundle.json --pretty
+```
+
+Rendering then happens inside Isaac Sim/Isaac Lab:
+
+1. Load the replay bundle inside the Isaac Lab integration workspace.
+2. Generate/load the USD room scene from `scene_manifest`.
+3. Execute `compiled_commands` in the robot control loop.
+4. Use headless mode for validator batch scoring.
+5. Capture replay camera streams from fixed validator cameras for public demos.
+6. Export MP4 clips or image sequences.
+7. Store `softlife.physics_replay.v1` artifacts separately from public miner challenge data.
 
 Recommended camera set:
 
@@ -75,9 +83,9 @@ Hidden validator mode must not show:
 
 After the current alignment work, the next credible milestones are:
 
-1. Build a minimal Isaac Lab task package outside the lightweight MVP path.
+1. Implement the Isaac Lab task loop in `integrations/isaac_lab`.
 2. Load one hotel-room USD scene with a Unitree-compatible robot.
-3. Execute one hand-authored `Trajectory` through the compiled command provider.
+3. Execute bundle `compiled_commands` through the Isaac controller.
 4. Record one successful Isaac replay video.
 5. Feed the final physics truth back into Soft Life `ReplayResult`.
 6. Add a public playground mode with videos and a hidden eval mode without leaks.

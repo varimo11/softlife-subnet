@@ -3,15 +3,23 @@ from __future__ import annotations
 import json
 import unittest
 
+from integrations.isaac_lab.softlife_isaac_lab.replay_runner import (
+    IsaacLabNotAvailable,
+    find_isaac_lab_package,
+    run_replay_bundle,
+)
 from softlife_subnet.actions import Action, ActionType, Trajectory
+from softlife_subnet.isaac_handoff import build_isaac_replay_bundle
 from softlife_subnet.isaac_adapter import IsaacSimSimulationAdapter, IsaacSimUnavailableError
 from softlife_subnet.leaderboard import Leaderboard
 from softlife_subnet.miners import HeuristicMiner, NoOpMiner
+from softlife_subnet.physics_artifacts import PhysicsReplayArtifact
 from softlife_subnet.robotics import (
     ActionProvider,
     HotelRoomSceneManifest,
     RobotCommandType,
     SoftLifeTrajectoryProvider,
+    build_symbolic_physics_artifact,
 )
 from softlife_subnet.room_generator import RoomGenerator
 from softlife_subnet.scoring import clamp_score
@@ -121,10 +129,75 @@ class MvpTests(unittest.TestCase):
         room = RoomGenerator().generate(42)
         trajectory = HeuristicMiner().solve(room.to_public())
         adapter = IsaacSimSimulationAdapter()
+        bundle = adapter.compile_replay_bundle(room, trajectory, miner_id="test_miner")
 
         self.assertIsInstance(adapter, SimulationAdapter)
+        self.assertEqual(bundle.miner_id, "test_miner")
+        self.assertEqual(len(bundle.compiled_commands), len(trajectory))
         with self.assertRaises(IsaacSimUnavailableError):
             adapter.replay(room, trajectory)
+
+    def test_physics_artifact_schema_is_deterministic_and_redacts_public_summary(self) -> None:
+        room = RoomGenerator().generate(42)
+        trajectory = HeuristicMiner().solve(room.to_public())
+        replay = MockSimulationAdapter().replay(room, trajectory)
+        manifest = HotelRoomSceneManifest.from_environment(room)
+        commands = tuple(
+            command.to_wire()
+            for command in SoftLifeTrajectoryProvider(trajectory, manifest).commands()
+        )
+
+        first = build_symbolic_physics_artifact(
+            adapter_name=replay.adapter_name,
+            initial_state=replay.initial_state,
+            final_state=replay.final_state,
+            scene_manifest=manifest,
+            step_count=replay.action_count,
+            command_log=commands,
+        )
+        second = build_symbolic_physics_artifact(
+            adapter_name=replay.adapter_name,
+            initial_state=replay.initial_state,
+            final_state=replay.final_state,
+            scene_manifest=manifest,
+            step_count=replay.action_count,
+            command_log=commands,
+        )
+
+        self.assertIsInstance(first, PhysicsReplayArtifact)
+        self.assertEqual(first.artifact_hash, second.artifact_hash)
+        self.assertEqual(first.to_private_wire(), second.to_private_wire())
+        self.assertNotIn("sim_seed", json.dumps(first.to_public_summary(), sort_keys=True))
+        self.assertNotIn("/World/SoftLifeRooms", json.dumps(first.to_public_summary()))
+
+    def test_isaac_replay_bundle_exports_commands_without_private_seed_by_default(self) -> None:
+        bundle = build_isaac_replay_bundle(seed=42)
+        redacted = bundle.to_wire()
+        private = bundle.to_wire(include_private_seed=True)
+
+        self.assertEqual(redacted["bundle_schema"], "softlife.isaac_replay_bundle.v1")
+        self.assertGreater(len(redacted["compiled_commands"]), 0)
+        self.assertEqual(
+            len(redacted["compiled_commands"]),
+            len(redacted["trajectory"]),
+        )
+        self.assertNotIn(
+            "private_seed",
+            json.dumps(redacted["validator_private_state"], sort_keys=True),
+        )
+        self.assertIn(
+            "private_seed",
+            json.dumps(private["validator_private_state"], sort_keys=True),
+        )
+        json.dumps(redacted, sort_keys=True)
+
+    def test_isaac_lab_runner_fails_clearly_without_dependency(self) -> None:
+        bundle = build_isaac_replay_bundle(seed=42).to_wire()
+        if find_isaac_lab_package() is not None:
+            self.skipTest("Isaac Lab is installed; runner implementation is intentionally pending.")
+
+        with self.assertRaises(IsaacLabNotAvailable):
+            run_replay_bundle(bundle)
 
     def test_replay_is_deterministic_and_does_not_mutate_private_state(self) -> None:
         room = RoomGenerator().generate(42)
