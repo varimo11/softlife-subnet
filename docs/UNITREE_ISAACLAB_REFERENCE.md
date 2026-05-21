@@ -137,6 +137,8 @@ Unitree's structure:
 - `softlife_subnet.isaac_handoff.IsaacReplayBundle`
 - `softlife_subnet.isaac_adapter.IsaacSimSimulationAdapter`
 - `integrations.isaac_lab.softlife_isaac_lab.controllers.RobotReplayController`
+- `integrations.isaac_lab.softlife_isaac_lab.unitree_controller.UnitreeIsaacReplayController`
+- `integrations.isaac_lab.softlife_isaac_lab.unitree_controller.UnitreeIsaacBackend`
 - `integrations/isaac_lab/`
 - `docs/ISAAC_TASK_MAPPING.md`
 - `docs/RENDERING_AND_DEMO_PATH.md`
@@ -146,7 +148,7 @@ without breaking the current mock physics demo.
 
 ## Suggested Next Milestones
 
-1. Implement `UnitreeIsaacReplayController` behind `RobotReplayController`.
+1. Implement a concrete `UnitreeIsaacBackend`.
 2. Render one successful Isaac replay from a fixed validator camera.
 3. Feed Isaac physics truth back into the existing `ReplayResult`.
 4. Only after that, add optional Unitree/DDS bridge support.

@@ -14,6 +14,8 @@ Implemented here:
   imports.
 - `RobotReplayController` boundary with a `StageReplayController` implementation,
   ready to be replaced by a Unitree/Isaac controller.
+- `UnitreeIsaacReplayController` command mapper plus `UnitreeIsaacBackend`
+  protocol for real Isaac Lab / Unitree execution.
 - Mock physics artifact export for offline schema testing.
 - Physics artifact scoring back into Soft Life readiness.
 - Deterministic scene manifest and compiled robot commands.
@@ -90,9 +92,22 @@ Isaac bridge; the next step is replacing stage-level object motion with a
 Unitree robot controller and real contact-rich physics.
 
 The replacement point is `RobotReplayController`. A future
-`UnitreeIsaacReplayController` should implement the same `execute(...)` and
-`to_artifact(...)` methods while driving articulations, grippers, contacts,
-camera capture, and collision telemetry instead of directly moving stage prims.
+`UnitreeIsaacReplayController` now implements the same `execute(...)` and
+`to_artifact(...)` methods. It delegates actual robot work to a
+`UnitreeIsaacBackend`, which is the piece that must connect Isaac Lab scene/env
+handles, Unitree articulation controllers, grippers, contacts, camera capture,
+and collision telemetry.
+
+The intended runtime command is:
+
+```bash
+./python.sh /path/to/softlife-subnet-demo/integrations/isaac_lab/scripts/run_unitree_isaac_replay.py \
+  --bundle /tmp/softlife_seed42_bundle.json \
+  --out-artifact /tmp/softlife_seed42_unitree_artifact.json
+```
+
+Today this fails clearly until a concrete backend satisfying
+`UnitreeIsaacBackend` is configured.
 
 ## First Isaac Demo Target
 

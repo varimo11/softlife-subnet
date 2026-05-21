@@ -18,6 +18,13 @@ from integrations.isaac_lab.softlife_isaac_lab.controllers import (
     RobotReplayController,
     StageReplayController,
 )
+from integrations.isaac_lab.softlife_isaac_lab.unitree_controller import (
+    BackendCommandResult,
+    BackendSnapshot,
+    UnitreeIsaacBackend,
+    UnitreeIsaacControllerUnavailable,
+    UnitreeIsaacReplayController,
+)
 from integrations.isaac_lab.softlife_isaac_lab.usd_export import render_usda_scene
 from softlife_subnet.actions import Action, ActionType, Trajectory
 from softlife_subnet.artifact_ingest import replay_result_from_physics_artifact
@@ -25,7 +32,11 @@ from softlife_subnet.isaac_handoff import build_isaac_replay_bundle
 from softlife_subnet.isaac_adapter import IsaacSimSimulationAdapter, IsaacSimUnavailableError
 from softlife_subnet.leaderboard import Leaderboard
 from softlife_subnet.miners import HeuristicMiner, NoOpMiner
-from softlife_subnet.physics_artifacts import PhysicsReplayArtifact
+from softlife_subnet.physics_artifacts import (
+    CleanlinessMeasurement,
+    ObjectPhysicsState,
+    PhysicsReplayArtifact,
+)
 from softlife_subnet.robotics import (
     ActionProvider,
     HotelRoomSceneManifest,
@@ -283,6 +294,35 @@ class MvpTests(unittest.TestCase):
         self.assertEqual(controller.command_log[0]["sim_steps"], 12)
         self.assertEqual(artifact.command_log[0]["message"], "approached pillow_1")
 
+    def test_unitree_controller_maps_commands_to_backend(self) -> None:
+        bundle = build_isaac_replay_bundle(seed=42).to_wire()
+        backend = _FakeUnitreeBackend(bundle)
+        controller = UnitreeIsaacReplayController.from_bundle(bundle, backend=backend)
+
+        for command in bundle["compiled_commands"][:4]:
+            controller.execute(command, sim_steps=12)
+        artifact = controller.to_artifact(
+            adapter_name="unitree_test",
+            action_count=4,
+            step_count=48,
+        )
+
+        self.assertIsInstance(backend, UnitreeIsaacBackend)
+        self.assertIsInstance(controller, RobotReplayController)
+        self.assertEqual(
+            backend.calls,
+            ["approach_object", "grasp_object", "navigate_to_frame", "release_object"],
+        )
+        self.assertEqual(controller.command_log[1]["held_object_after"], "pillow_1")
+        self.assertEqual(artifact.adapter_name, "unitree_test")
+        self.assertEqual(artifact.object_states[0].zone, "bed")
+
+    def test_unitree_controller_fails_clearly_without_backend(self) -> None:
+        bundle = build_isaac_replay_bundle(seed=42).to_wire()
+
+        with self.assertRaises(UnitreeIsaacControllerUnavailable):
+            UnitreeIsaacReplayController.from_bundle(bundle)
+
     def test_isaac_sim_stage_runner_fails_clearly_without_runtime(self) -> None:
         bundle = build_isaac_replay_bundle(seed=42).to_wire()
         if find_isaac_sim_package() is not None:
@@ -396,6 +436,133 @@ class MvpTests(unittest.TestCase):
         self.assertNotIn("private_seed", result_json)
         self.assertNotIn("final_state", result_json)
         self.assertNotIn("hidden_object_count", result_json)
+
+
+class _FakeUnitreeBackend:
+    backend_name = "fake_unitree_backend"
+
+    def __init__(self, bundle: dict[str, object]) -> None:
+        self.bundle = bundle
+        manifest = bundle["scene_manifest"]
+        self.scene_root = manifest["root_prim"]
+        self.object_prim = manifest["object_prims"]["pillow_1"]
+        self.surface_prim = manifest["surface_prims"]["bed"]
+        self.robot_zone = "entry"
+        self.held_object_id: str | None = None
+        self.object_zone = "nightstand"
+        self.calls: list[str] = []
+
+    def navigate_to_frame(
+        self,
+        *,
+        target_frame: str,
+        zone: str,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        self.calls.append("navigate_to_frame")
+        self.robot_zone = zone
+        return self._result(f"navigated to {zone}", sim_steps)
+
+    def approach_object(
+        self,
+        *,
+        object_id: str,
+        object_prim: str,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        self.calls.append("approach_object")
+        self.robot_zone = self.object_zone
+        return self._result(f"approached {object_id}", sim_steps)
+
+    def grasp_object(
+        self,
+        *,
+        object_id: str,
+        object_prim: str,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        self.calls.append("grasp_object")
+        self.held_object_id = object_id
+        self.object_zone = "__held__"
+        return self._result(f"grasped {object_id}", sim_steps)
+
+    def release_object(
+        self,
+        *,
+        object_id: str,
+        target_frame: str,
+        zone: str,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        self.calls.append("release_object")
+        self.held_object_id = None
+        self.robot_zone = zone
+        self.object_zone = zone
+        return self._result(f"released {object_id} in {zone}", sim_steps)
+
+    def drop_in_receptacle(
+        self,
+        *,
+        object_id: str,
+        target_frame: str,
+        zone: str,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        self.calls.append("drop_in_receptacle")
+        self.held_object_id = None
+        self.robot_zone = zone
+        self.object_zone = zone
+        return self._result(f"dropped {object_id} in {zone}", sim_steps)
+
+    def wipe_surface(
+        self,
+        *,
+        surface_prim: str,
+        zone: str,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        self.calls.append("wipe_surface")
+        self.robot_zone = zone
+        return self._result(f"wiped {zone}", sim_steps)
+
+    def hold_position(self, *, sim_steps: int) -> BackendCommandResult:
+        self.calls.append("hold_position")
+        return self._result("held position", sim_steps)
+
+    def snapshot(self) -> BackendSnapshot:
+        return BackendSnapshot(
+            room_id=self.bundle["challenge_id"],
+            scene_root=self.scene_root,
+            sim_seed=None,
+            robot_zone=self.robot_zone,
+            object_states=(
+                ObjectPhysicsState(
+                    object_id="pillow_1",
+                    prim_path=self.object_prim,
+                    target_zone="bed",
+                    zone=None if self.object_zone == "__held__" else self.object_zone,
+                    held=self.object_zone == "__held__",
+                ),
+            ),
+            cleanliness=(
+                CleanlinessMeasurement(
+                    zone="bed",
+                    surface_prim=self.surface_prim,
+                    dirt_before=0.4,
+                    dirt_after=0.4,
+                    cleaned_area_fraction=0.0,
+                ),
+            ),
+        )
+
+    def _result(self, message: str, sim_steps: int) -> BackendCommandResult:
+        return BackendCommandResult(
+            ok=True,
+            message=message,
+            robot_zone_after=self.robot_zone,
+            held_object_after=self.held_object_id,
+            sim_steps=sim_steps,
+        )
 
 
 if __name__ == "__main__":

@@ -21,14 +21,26 @@ from integrations.isaac_lab.softlife_isaac_lab.replay_runner import (
     find_isaac_lab_package,
     run_replay_bundle,
 )
+from integrations.isaac_lab.softlife_isaac_lab.unitree_controller import (
+    BackendCommandResult,
+    BackendSnapshot,
+    UnitreeIsaacBackend,
+    UnitreeIsaacControllerUnavailable,
+    UnitreeIsaacReplayController,
+)
 
 __all__ = [
+    "BackendCommandResult",
+    "BackendSnapshot",
     "IsaacLabNotAvailable",
     "IsaacSimRuntimeNotAvailable",
     "CommandExecutionResult",
     "RobotReplayController",
     "SoftLifeIsaacRunConfig",
     "StageReplayController",
+    "UnitreeIsaacBackend",
+    "UnitreeIsaacControllerUnavailable",
+    "UnitreeIsaacReplayController",
     "build_stage_level_artifact",
     "find_isaac_lab_package",
     "find_isaac_sim_package",

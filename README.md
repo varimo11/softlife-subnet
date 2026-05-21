@@ -82,6 +82,15 @@ On an Isaac Sim workstation, run `run_isaac_stage_replay.py` with Isaac Sim's
 Python instead of `--dry-run` to load the scene, apply compiled commands on the
 USD stage, optionally capture viewport frames, and write the validator artifact.
 
+The Unitree controller path is wired as a backend contract:
+
+```bash
+./python.sh integrations/isaac_lab/scripts/run_unitree_isaac_replay.py --bundle /tmp/softlife_seed42_bundle.json --out-artifact /tmp/softlife_seed42_unitree_artifact.json
+```
+
+That command is ready for an implementation of `UnitreeIsaacBackend`, which is
+where Isaac Lab robot/env handles and Unitree gripper/control APIs plug in.
+
 ## Docs
 
 - `docs/THREAT_MODEL.md`: overfitting, invalid action spam, unsafe policies, scoring loopholes, seed leaks, validator manipulation, and replay nondeterminism.

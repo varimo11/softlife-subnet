@@ -26,6 +26,12 @@ Current Isaac-aligned scaffolding:
 - `RobotReplayController`: controller boundary used by the Isaac runner. The
   current implementation is `StageReplayController`; the next one should be a
   Unitree/Isaac controller that drives robot articulations and grippers.
+- `UnitreeIsaacReplayController`: command mapper from Soft Life compiled
+  commands to backend operations such as navigate, approach, grasp, release,
+  drop, and wipe.
+- `UnitreeIsaacBackend`: protocol for the concrete Isaac Lab / Unitree backend
+  that owns env handles, articulations, gripper commands, contacts, cameras,
+  and physics snapshots.
 - `score_physics_artifact.py`: ingestion path from Isaac physics truth back into
   the validator scorer.
 - `IsaacSimSimulationAdapter`: optional backend boundary that currently raises a
@@ -222,3 +228,15 @@ real Isaac controller should implement the same contract:
 That keeps the validator handoff, physics artifact schema, and scoring bridge
 stable while the execution backend advances from stage replay to Unitree robot
 control.
+
+The Unitree path now has its own controller mapper. The remaining implementation
+is the concrete backend behind `UnitreeIsaacBackend`. That backend should:
+
+- open or receive an Isaac Lab environment/scene;
+- resolve target frames and object prims from the bundle manifest;
+- plan or command robot base/end-effector motion;
+- command gripper open/close and verify grasp attachment;
+- release/drop objects and wait for rest;
+- execute cleaning/contact trajectories;
+- collect contacts, collisions, drops, damage, and camera frames;
+- return a `BackendSnapshot` for `softlife.physics_replay.v1`.
