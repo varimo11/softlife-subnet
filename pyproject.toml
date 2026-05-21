@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "softlife-subnet-demo"
+version = "0.1.0"
+description = "Deterministic MVP scaffold for a decentralized robotics intelligence evaluation subnet."
+readme = "README.md"
+requires-python = ">=3.9"
+
+[project.scripts]
+softlife-demo = "softlife_subnet.cli:main"
+softlife-visual-demo = "softlife_subnet.visual_demo.server:main"
+
+[tool.setuptools.packages.find]
+include = ["softlife_subnet*"]

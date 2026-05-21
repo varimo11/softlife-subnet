@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Soft Life Visual Subnet Demo</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="top-strip" aria-label="Demo controls">
+        <div class="brand-block">
+          <span class="eyebrow">Soft Life Subnet</span>
+          <h1>Hotel Room Readiness Replay</h1>
+          <p id="runMeta">Loading validator challenge...</p>
+        </div>
+        <div id="phaseRail" class="phase-rail" aria-label="Evaluation pipeline">
+          <div class="phase active" data-phase="hidden"><span>01</span>Hidden Room</div>
+          <div class="phase" data-phase="miner"><span>02</span>Miner Policy</div>
+          <div class="phase" data-phase="replay"><span>03</span>Validator Replay</div>
+          <div class="phase" data-phase="score"><span>04</span>Readiness</div>
+          <div class="phase" data-phase="weights"><span>05</span>Weights</div>
+        </div>
+        <form id="seedForm" class="seed-form">
+          <label for="seedInput">Seed</label>
+          <input id="seedInput" name="seed" type="number" value="42">
+          <button type="submit">Load</button>
+        </form>
+      </section>
+
+      <section class="workspace">
+        <div class="room-panel">
+          <div class="room-toolbar">
+            <div>
+              <span class="panel-kicker">Active Miner</span>
+              <strong id="activeMiner">Miner</strong>
+              <span id="stepLabel">Step 0 / 0</span>
+            </div>
+            <div class="controls">
+              <button id="resetButton" type="button">Reset</button>
+              <button id="stepButton" type="button">Step</button>
+              <button id="playButton" type="button">Pause</button>
+              <label class="speed-control">
+                Speed
+                <input id="speedRange" type="range" min="250" max="1600" step="50" value="1050">
+              </label>
+            </div>
+          </div>
+          <div class="progress-track" aria-hidden="true">
+            <div id="progressFill"></div>
+          </div>
+          <div id="roomStage" class="room-stage" aria-label="Hotel room replay">
+            <div class="scanline" aria-hidden="true"></div>
+            <div id="robot" class="robot">BOT</div>
+          </div>
+        </div>
+
+        <aside class="side-panel">
+          <section class="panel-section score-section">
+            <div class="section-title">Validator Readiness Score</div>
+            <div class="readiness">
+              <span id="readinessValue">0.000</span>
+              <span>/ 100</span>
+            </div>
+            <div class="score-bars">
+              <div>
+                <label>Objects</label>
+                <div class="meter"><span id="objectMeter"></span></div>
+                <output id="objectScore">0.000</output>
+              </div>
+              <div>
+                <label>Cleanliness</label>
+                <div class="meter"><span id="cleanMeter"></span></div>
+                <output id="cleanScore">0.000</output>
+              </div>
+              <div>
+                <label>Efficiency</label>
+                <div class="meter"><span id="efficiencyMeter"></span></div>
+                <output id="efficiencyScore">0.000</output>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel-section">
+            <div class="section-title">Replay Telemetry</div>
+            <p id="eventText" class="event-text">Waiting for replay...</p>
+            <div class="detail-grid">
+              <span>Robot zone</span><strong id="robotZone">entry</strong>
+              <span>Held object</span><strong id="heldObject">none</strong>
+              <span>Invalid actions</span><strong id="invalidActions">0</strong>
+            </div>
+          </section>
+
+          <section class="panel-section">
+            <div class="section-title">Miner Public State</div>
+            <div id="publicState" class="public-state"></div>
+          </section>
+
+          <section class="panel-section">
+            <div class="section-title">Leaderboard Weights</div>
+            <div id="leaderboard" class="leaderboard"></div>
+          </section>
+        </aside>
+      </section>
+
+      <section class="bottom-strip">
+        <div>
+          <div class="section-title">Miner Trajectory</div>
+          <ol id="trajectoryList" class="trajectory-list"></ol>
+        </div>
+        <div>
+          <div class="section-title">Validator Replay Log</div>
+          <ol id="replayLog" class="replay-log"></ol>
+        </div>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

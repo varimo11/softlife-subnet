@@ -1,0 +1,68 @@
+# Softlife Subnet Demo
+
+This repository is an MVP scaffold for a decentralized robotics intelligence market inspired by Bittensor.
+
+The first task is restoring a messy hotel room to guest-ready condition. A validator owns the hidden environment state and replay adapter. Miners receive only a public structured room state and return a JSON-serializable action trajectory. The validator replays that trajectory deterministically and scores room readiness.
+
+This is not a hotel management app. It is a lightweight evaluation market for embodied service intelligence that can later map into Bittensor, Isaac Sim, ROS2, and real robot hardware.
+
+## Architecture
+
+- `softlife_subnet.room_generator`: deterministic hidden scenario generation from a private seed.
+- `softlife_subnet.state`: private `EnvironmentState` and miner-facing `PublicRoomState` contracts.
+- `softlife_subnet.actions`: wire-friendly `Action` and `Trajectory` primitives.
+- `softlife_subnet.simulation`: `SimulationAdapter`, `MockSimulationAdapter`, and `ReplayResult`.
+- `softlife_subnet.scoring`: room readiness scoring.
+- `softlife_subnet.validators`: validator boundary and private challenge storage.
+- `softlife_subnet.miners`: miner interface and baseline heuristic miner.
+- `softlife_subnet.leaderboard`: score aggregation and normalized weights.
+- `docs/`: integration plans and threat model.
+
+## Run The Demo
+
+```bash
+python3 -m softlife_subnet.cli --seed 42 --show-public-state
+```
+
+The seed is supplied to the validator only. Miners receive a `PublicRoomState` with visible objects, visible surface dirt estimates, allowed zones, and no private simulation state. The CLI shows the local validator-only hidden summary, public miner state, returned trajectories, replay logs, score breakdown, leaderboard, and normalized weights.
+
+## Run The Visual Demo
+
+```bash
+python3 -m softlife_subnet.visual_demo --seed 42
+```
+
+This starts a lightweight local web demo and opens it in a browser. The page renders room zones, object tokens for towel, cup, pillows, trash, and toiletry bottle, the miner trajectory, validator replay events, live readiness scoring, and normalized leaderboard weights.
+
+For a server-only run:
+
+```bash
+python3 -m softlife_subnet.visual_demo --seed 42 --no-open
+```
+
+## Run Tests
+
+```bash
+python3 -m unittest discover -s tests
+```
+
+The tests cover deterministic room generation, deterministic replay logs, hidden-state boundaries, invalid action penalties, scoring caps, adapter conformance, trajectory serialization, and leaderboard weights.
+
+For sandboxed macOS Python bytecode compilation:
+
+```bash
+env PYTHONPYCACHEPREFIX=/private/tmp/softlife_pycache python3 -m compileall -q softlife_subnet tests
+```
+
+## Docs
+
+- `docs/THREAT_MODEL.md`: overfitting, invalid action spam, unsafe policies, scoring loopholes, seed leaks, validator manipulation, and replay nondeterminism.
+- `docs/ISAAC_SIM_INTEGRATION_PLAN.md`: mapping symbolic room state into USD scenes, deterministic hidden scene generation, replay logs, scoring, ROS2 bridge, and first visual demo.
+- `docs/BITTENSOR_INTEGRATION_PLAN.md`: miner/validator interfaces, synapse shape, hidden evaluations, score-to-weight flow, Yuma mapping, and what is not implemented yet.
+
+## Extension Points
+
+- Add `IsaacSimSimulationAdapter` behind the existing `SimulationAdapter` protocol.
+- Replace `Validator` storage/evaluation with a Bittensor validator process.
+- Replace `Miner.solve()` implementations with policy inference, planning, ROS2 action servers, or remote miner RPC.
+- Add richer physics facts to `EnvironmentState` while preserving a reduced `PublicRoomState` for miners.
