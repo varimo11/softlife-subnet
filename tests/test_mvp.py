@@ -8,6 +8,12 @@ from integrations.isaac_lab.softlife_isaac_lab.replay_runner import (
     find_isaac_lab_package,
     run_replay_bundle,
 )
+from integrations.isaac_lab.softlife_isaac_lab.isaac_sim_runner import (
+    IsaacSimRuntimeNotAvailable,
+    build_stage_level_artifact,
+    find_isaac_sim_package,
+    run_isaac_sim_stage_replay,
+)
 from integrations.isaac_lab.softlife_isaac_lab.usd_export import render_usda_scene
 from softlife_subnet.actions import Action, ActionType, Trajectory
 from softlife_subnet.artifact_ingest import replay_result_from_physics_artifact
@@ -24,7 +30,7 @@ from softlife_subnet.robotics import (
     build_symbolic_physics_artifact,
 )
 from softlife_subnet.room_generator import RoomGenerator
-from softlife_subnet.scoring import clamp_score
+from softlife_subnet.scoring import RoomReadinessScorer, clamp_score
 from softlife_subnet.simulation import MockSimulationAdapter, ReplayResult, SimulationAdapter
 from softlife_subnet.validators import Validator
 
@@ -235,6 +241,33 @@ class MvpTests(unittest.TestCase):
         self.assertIn('def Camera "wide_validator_camera"', usda)
         self.assertIn("softlife:asset_hint", usda)
         self.assertIn("room_1cf6ab0be52f", usda)
+
+    def test_isaac_stage_level_replay_artifact_scores_like_validator_replay(self) -> None:
+        bundle = build_isaac_replay_bundle(seed=42).to_wire()
+        artifact = build_stage_level_artifact(bundle)
+        room = RoomGenerator().generate(42)
+        trajectory = Trajectory.from_wire(bundle["trajectory"])
+        replay = replay_result_from_physics_artifact(
+            initial_state=room,
+            trajectory=trajectory,
+            artifact=artifact,
+        )
+        score = RoomReadinessScorer().score(replay)
+
+        self.assertEqual(artifact.adapter_name, "isaac_sim_stage_replay_v1")
+        self.assertEqual(artifact.action_count, len(bundle["compiled_commands"]))
+        self.assertEqual(artifact.invalid_actions, 0)
+        self.assertEqual(replay.events[0].robot_zone_after, "nightstand")
+        self.assertEqual(replay.events[1].held_object_after, "pillow_1")
+        self.assertEqual(score.readiness, 97.679)
+
+    def test_isaac_sim_stage_runner_fails_clearly_without_runtime(self) -> None:
+        bundle = build_isaac_replay_bundle(seed=42).to_wire()
+        if find_isaac_sim_package() is not None:
+            self.skipTest("Isaac Sim is installed; runtime execution requires local GPU setup.")
+
+        with self.assertRaises(IsaacSimRuntimeNotAvailable):
+            run_isaac_sim_stage_replay(bundle)
 
     def test_isaac_lab_runner_fails_clearly_without_dependency(self) -> None:
         bundle = build_isaac_replay_bundle(seed=42).to_wire()

@@ -5,6 +5,12 @@ on machines without NVIDIA/Isaac dependencies.
 """
 
 from integrations.isaac_lab.softlife_isaac_lab.config import SoftLifeIsaacRunConfig
+from integrations.isaac_lab.softlife_isaac_lab.isaac_sim_runner import (
+    IsaacSimRuntimeNotAvailable,
+    build_stage_level_artifact,
+    find_isaac_sim_package,
+    run_isaac_sim_stage_replay,
+)
 from integrations.isaac_lab.softlife_isaac_lab.replay_runner import (
     IsaacLabNotAvailable,
     find_isaac_lab_package,
@@ -13,7 +19,11 @@ from integrations.isaac_lab.softlife_isaac_lab.replay_runner import (
 
 __all__ = [
     "IsaacLabNotAvailable",
+    "IsaacSimRuntimeNotAvailable",
     "SoftLifeIsaacRunConfig",
+    "build_stage_level_artifact",
     "find_isaac_lab_package",
+    "find_isaac_sim_package",
+    "run_isaac_sim_stage_replay",
     "run_replay_bundle",
 ]

@@ -95,14 +95,16 @@ def _events_from_artifact(
         command = command_by_index.get(index, {})
         ok = bool(command.get("ok", True))
         message = str(command.get("message", "physics replay command accepted"))
+        robot_zone_after = str(command.get("robot_zone_after", final_robot_zone))
+        held_object_after = command.get("held_object_after")
         events.append(
             ReplayEvent(
                 action_index=index,
                 action=action,
                 ok=ok,
                 message=message,
-                robot_zone_after=final_robot_zone,
-                held_object_after=None,
+                robot_zone_after=robot_zone_after,
+                held_object_after=None if held_object_after is None else str(held_object_after),
             )
         )
     return tuple(events)

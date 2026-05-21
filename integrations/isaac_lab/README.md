@@ -10,6 +10,8 @@ Implemented here:
 
 - Validator-private replay bundle export.
 - Lightweight USDA scene export for Isaac/Omniverse inspection.
+- Stage-level Isaac Sim replay runner with lazy `isaacsim` / `omni.isaac.kit`
+  imports.
 - Mock physics artifact export for offline schema testing.
 - Physics artifact scoring back into Soft Life readiness.
 - Deterministic scene manifest and compiled robot commands.
@@ -19,10 +21,10 @@ Implemented here:
 Still requiring an Isaac-capable machine:
 
 - USD asset loading.
-- Isaac Lab `ManagerBasedRLEnv` or direct simulation loop.
 - Unitree robot articulation config.
 - Camera rendering/video export.
-- Physics truth extraction from the live simulator.
+- Isaac Lab `ManagerBasedRLEnv` task and robot controller physics.
+- Full contact-rich physics truth extraction from the live simulator.
 
 ## Export A Replay Bundle
 
@@ -57,6 +59,33 @@ python3 integrations/isaac_lab/scripts/score_physics_artifact.py --bundle /tmp/s
 The first command emits the exact `softlife.physics_replay.v1` schema that the
 real Isaac task must return. The second command ingests that artifact into the
 validator scoring path.
+
+## Run The Stage-Level Isaac Sim Replay
+
+On an Isaac Sim workstation, run this with Isaac Sim's Python environment:
+
+```bash
+./python.sh /path/to/softlife-subnet-demo/integrations/isaac_lab/scripts/run_isaac_stage_replay.py \
+  --bundle /tmp/softlife_seed42_bundle.json \
+  --scene /tmp/softlife_seed42_scene.usda \
+  --out-artifact /tmp/softlife_seed42_isaac_artifact.json \
+  --render-dir /tmp/softlife_frames
+```
+
+For a local dependency-free check:
+
+```bash
+python3 integrations/isaac_lab/scripts/run_isaac_stage_replay.py \
+  --bundle /tmp/softlife_seed42_bundle.json \
+  --out-artifact /tmp/softlife_seed42_stage_artifact.json \
+  --dry-run
+```
+
+This runner loads the USD scene, applies compiled command effects to stage
+prims, advances Isaac Sim, optionally captures viewport frames, and writes the
+same physics artifact schema used by the validator. It is the first runnable
+Isaac bridge; the next step is replacing stage-level object motion with a
+Unitree robot controller and real contact-rich physics.
 
 ## First Isaac Demo Target
 

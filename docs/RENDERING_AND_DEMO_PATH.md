@@ -52,6 +52,19 @@ After Isaac produces a physics artifact, score it with:
 python3 integrations/isaac_lab/scripts/score_physics_artifact.py --bundle /tmp/softlife_seed42_bundle.json --artifact /tmp/softlife_seed42_artifact.json --seed 42 --pretty
 ```
 
+The first Isaac-runnable stage-level replay command is:
+
+```bash
+./python.sh /path/to/softlife-subnet-demo/integrations/isaac_lab/scripts/run_isaac_stage_replay.py \
+  --bundle /tmp/softlife_seed42_bundle.json \
+  --scene /tmp/softlife_seed42_scene.usda \
+  --out-artifact /tmp/softlife_seed42_isaac_artifact.json \
+  --render-dir /tmp/softlife_frames
+```
+
+Use `--dry-run` with normal Python to validate the same command semantics
+without launching Isaac Sim.
+
 Recommended camera set:
 
 - Wide room camera showing bed, floor, desk, hamper, and trash bin.
@@ -95,7 +108,7 @@ Hidden validator mode must not show:
 
 After the current alignment work, the next credible milestones are:
 
-1. Implement the Isaac Lab task loop in `integrations/isaac_lab`.
+1. Replace stage-level object motion with a real Unitree/Isaac controller.
 2. Replace bootstrap cubes with real USD hotel-room and object assets.
 3. Load one hotel-room USD scene with a Unitree-compatible robot.
 4. Execute bundle `compiled_commands` through the Isaac controller.

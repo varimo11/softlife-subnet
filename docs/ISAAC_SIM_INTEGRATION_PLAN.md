@@ -20,6 +20,9 @@ Current Isaac-aligned scaffolding:
 - `IsaacReplayBundle`: validator-private JSON handoff for an Isaac Lab machine.
 - `export_scene_usd.py`: bootstrap USDA scene export with zones, target frames,
   objects, surfaces, and cameras.
+- `run_isaac_stage_replay.py`: Isaac Sim runtime bridge that loads the stage,
+  applies compiled command effects, optionally captures viewport frames, and
+  writes a physics artifact.
 - `score_physics_artifact.py`: ingestion path from Isaac physics truth back into
   the validator scorer.
 - `IsaacSimSimulationAdapter`: optional backend boundary that currently raises a
@@ -189,3 +192,16 @@ Score a returned physics artifact:
 ```bash
 python3 integrations/isaac_lab/scripts/score_physics_artifact.py --bundle /tmp/softlife_seed42_bundle.json --artifact /tmp/softlife_seed42_artifact.json --seed 42 --pretty
 ```
+
+Run the current stage-level bridge inside Isaac Sim:
+
+```bash
+./python.sh /path/to/softlife-subnet-demo/integrations/isaac_lab/scripts/run_isaac_stage_replay.py \
+  --bundle /tmp/softlife_seed42_bundle.json \
+  --scene /tmp/softlife_seed42_scene.usda \
+  --out-artifact /tmp/softlife_seed42_isaac_artifact.json \
+  --render-dir /tmp/softlife_frames
+```
+
+This is not yet robot manipulation. It proves the Isaac runtime path,
+stage loading, command execution, optional frame capture, and artifact return.

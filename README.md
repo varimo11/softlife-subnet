@@ -75,7 +75,12 @@ Offline artifact round-trip check:
 ```bash
 python3 integrations/isaac_lab/scripts/export_mock_physics_artifact.py --seed 42 --out /tmp/softlife_seed42_artifact.json --pretty
 python3 integrations/isaac_lab/scripts/score_physics_artifact.py --bundle /tmp/softlife_seed42_bundle.json --artifact /tmp/softlife_seed42_artifact.json --seed 42 --pretty
+python3 integrations/isaac_lab/scripts/run_isaac_stage_replay.py --bundle /tmp/softlife_seed42_bundle.json --out-artifact /tmp/softlife_seed42_stage_artifact.json --dry-run
 ```
+
+On an Isaac Sim workstation, run `run_isaac_stage_replay.py` with Isaac Sim's
+Python instead of `--dry-run` to load the scene, apply compiled commands on the
+USD stage, optionally capture viewport frames, and write the validator artifact.
 
 ## Docs
 
