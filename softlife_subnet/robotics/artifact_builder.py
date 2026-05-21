@@ -18,6 +18,8 @@ def build_symbolic_physics_artifact(
     final_state: EnvironmentState,
     scene_manifest: HotelRoomSceneManifest,
     step_count: int,
+    action_count: int | None = None,
+    invalid_actions: int = 0,
     command_log: tuple[Mapping[str, object], ...] = (),
 ) -> PhysicsReplayArtifact:
     """Create a physics artifact from symbolic replay.
@@ -46,6 +48,9 @@ def build_symbolic_physics_artifact(
         sim_seed=final_state.private_seed,
         time_step=1.0,
         step_count=step_count,
+        action_count=step_count if action_count is None else action_count,
+        robot_zone=final_state.robot_zone,
+        invalid_actions=invalid_actions,
         object_states=object_states,
         cleanliness=cleanliness,
         command_log=command_log,
@@ -77,7 +82,7 @@ def _cleanliness_measurement(
     return CleanlinessMeasurement(
         zone=final.zone,
         surface_prim=scene_manifest.surface_prim(final.zone) or "",
-        dirt_before=round(initial.dirt, 6),
-        dirt_after=round(final.dirt, 6),
-        cleaned_area_fraction=round(cleaned_fraction, 6),
+        dirt_before=initial.dirt,
+        dirt_after=final.dirt,
+        cleaned_area_fraction=cleaned_fraction,
     )

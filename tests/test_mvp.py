@@ -8,7 +8,9 @@ from integrations.isaac_lab.softlife_isaac_lab.replay_runner import (
     find_isaac_lab_package,
     run_replay_bundle,
 )
+from integrations.isaac_lab.softlife_isaac_lab.usd_export import render_usda_scene
 from softlife_subnet.actions import Action, ActionType, Trajectory
+from softlife_subnet.artifact_ingest import replay_result_from_physics_artifact
 from softlife_subnet.isaac_handoff import build_isaac_replay_bundle
 from softlife_subnet.isaac_adapter import IsaacSimSimulationAdapter, IsaacSimUnavailableError
 from softlife_subnet.leaderboard import Leaderboard
@@ -167,8 +169,39 @@ class MvpTests(unittest.TestCase):
         self.assertIsInstance(first, PhysicsReplayArtifact)
         self.assertEqual(first.artifact_hash, second.artifact_hash)
         self.assertEqual(first.to_private_wire(), second.to_private_wire())
+        self.assertEqual(
+            PhysicsReplayArtifact.from_wire(first.to_private_wire()),
+            first,
+        )
         self.assertNotIn("sim_seed", json.dumps(first.to_public_summary(), sort_keys=True))
         self.assertNotIn("/World/SoftLifeRooms", json.dumps(first.to_public_summary()))
+
+    def test_physics_artifact_ingests_back_into_replay_result(self) -> None:
+        room = RoomGenerator().generate(42)
+        trajectory = HeuristicMiner().solve(room.to_public())
+        mock_replay = MockSimulationAdapter().replay(room, trajectory)
+        manifest = HotelRoomSceneManifest.from_environment(room)
+        artifact = build_symbolic_physics_artifact(
+            adapter_name="isaac_lab_test",
+            initial_state=mock_replay.initial_state,
+            final_state=mock_replay.final_state,
+            scene_manifest=manifest,
+            step_count=240,
+            action_count=mock_replay.action_count,
+            invalid_actions=mock_replay.invalid_actions,
+        )
+
+        physics_replay = replay_result_from_physics_artifact(
+            initial_state=room,
+            trajectory=trajectory,
+            artifact=artifact,
+        )
+
+        self.assertEqual(physics_replay.final_state, mock_replay.final_state)
+        self.assertEqual(physics_replay.action_count, mock_replay.action_count)
+        self.assertEqual(physics_replay.invalid_actions, mock_replay.invalid_actions)
+        self.assertEqual(physics_replay.replay_hash, artifact.artifact_hash)
+        self.assertIs(physics_replay.physics_artifact, artifact)
 
     def test_isaac_replay_bundle_exports_commands_without_private_seed_by_default(self) -> None:
         bundle = build_isaac_replay_bundle(seed=42)
@@ -190,6 +223,18 @@ class MvpTests(unittest.TestCase):
             json.dumps(private["validator_private_state"], sort_keys=True),
         )
         json.dumps(redacted, sort_keys=True)
+
+    def test_isaac_replay_bundle_renders_usda_scene(self) -> None:
+        bundle = build_isaac_replay_bundle(seed=42).to_wire()
+        usda = render_usda_scene(bundle)
+
+        self.assertIn("#usda 1.0", usda)
+        self.assertIn('def Xform "World"', usda)
+        self.assertIn('def Xform "Zones"', usda)
+        self.assertIn('def Xform "Objects"', usda)
+        self.assertIn('def Camera "wide_validator_camera"', usda)
+        self.assertIn("softlife:asset_hint", usda)
+        self.assertIn("room_1cf6ab0be52f", usda)
 
     def test_isaac_lab_runner_fails_clearly_without_dependency(self) -> None:
         bundle = build_isaac_replay_bundle(seed=42).to_wire()

@@ -40,6 +40,18 @@ Rendering then happens inside Isaac Sim/Isaac Lab:
 6. Export MP4 clips or image sequences.
 7. Store `softlife.physics_replay.v1` artifacts separately from public miner challenge data.
 
+The current bootstrap USD export is:
+
+```bash
+python3 integrations/isaac_lab/scripts/export_scene_usd.py --bundle /tmp/softlife_seed42_bundle.json --out /tmp/softlife_seed42_scene.usda
+```
+
+After Isaac produces a physics artifact, score it with:
+
+```bash
+python3 integrations/isaac_lab/scripts/score_physics_artifact.py --bundle /tmp/softlife_seed42_bundle.json --artifact /tmp/softlife_seed42_artifact.json --seed 42 --pretty
+```
+
 Recommended camera set:
 
 - Wide room camera showing bed, floor, desk, hamper, and trash bin.
@@ -84,9 +96,10 @@ Hidden validator mode must not show:
 After the current alignment work, the next credible milestones are:
 
 1. Implement the Isaac Lab task loop in `integrations/isaac_lab`.
-2. Load one hotel-room USD scene with a Unitree-compatible robot.
-3. Execute bundle `compiled_commands` through the Isaac controller.
-4. Record one successful Isaac replay video.
-5. Feed the final physics truth back into Soft Life `ReplayResult`.
-6. Add a public playground mode with videos and a hidden eval mode without leaks.
-7. Only then add ROS2/DDS execution for real robot demos.
+2. Replace bootstrap cubes with real USD hotel-room and object assets.
+3. Load one hotel-room USD scene with a Unitree-compatible robot.
+4. Execute bundle `compiled_commands` through the Isaac controller.
+5. Record one successful Isaac replay video.
+6. Feed the final physics truth back into Soft Life `ReplayResult`.
+7. Add a public playground mode with videos and a hidden eval mode without leaks.
+8. Only then add ROS2/DDS execution for real robot demos.

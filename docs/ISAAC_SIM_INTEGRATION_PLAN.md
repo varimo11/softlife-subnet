@@ -18,6 +18,10 @@ Current Isaac-aligned scaffolding:
 - `PhysicsReplayArtifact`: validator-private physics truth schema for final object
   poses, zone membership, collisions, damage, drops, cleanliness, and command logs.
 - `IsaacReplayBundle`: validator-private JSON handoff for an Isaac Lab machine.
+- `export_scene_usd.py`: bootstrap USDA scene export with zones, target frames,
+  objects, surfaces, and cameras.
+- `score_physics_artifact.py`: ingestion path from Isaac physics truth back into
+  the validator scorer.
 - `IsaacSimSimulationAdapter`: optional backend boundary that currently raises a
   clear dependency error instead of importing Isaac Lab in the lightweight MVP.
 
@@ -173,3 +177,15 @@ python3 integrations/isaac_lab/scripts/export_replay_bundle.py --seed 42 --out /
 
 That file is the input contract for the Isaac Lab implementation. It is
 validator-private and must not be sent to miners.
+
+Generate the bootstrap USD scene:
+
+```bash
+python3 integrations/isaac_lab/scripts/export_scene_usd.py --bundle /tmp/softlife_seed42_bundle.json --out /tmp/softlife_seed42_scene.usda
+```
+
+Score a returned physics artifact:
+
+```bash
+python3 integrations/isaac_lab/scripts/score_physics_artifact.py --bundle /tmp/softlife_seed42_bundle.json --artifact /tmp/softlife_seed42_artifact.json --seed 42 --pretty
+```

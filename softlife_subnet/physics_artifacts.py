@@ -18,6 +18,12 @@ class Vector3:
     def to_wire(self) -> dict[str, float]:
         return {"x": self.x, "y": self.y, "z": self.z}
 
+    @classmethod
+    def from_wire(cls, payload: Mapping[str, Any] | None) -> "Vector3 | None":
+        if payload is None:
+            return None
+        return cls(x=float(payload["x"]), y=float(payload["y"]), z=float(payload["z"]))
+
 
 @dataclass(frozen=True)
 class Quaternion:
@@ -28,6 +34,17 @@ class Quaternion:
 
     def to_wire(self) -> dict[str, float]:
         return {"x": self.x, "y": self.y, "z": self.z, "w": self.w}
+
+    @classmethod
+    def from_wire(cls, payload: Mapping[str, Any] | None) -> "Quaternion | None":
+        if payload is None:
+            return None
+        return cls(
+            x=float(payload["x"]),
+            y=float(payload["y"]),
+            z=float(payload["z"]),
+            w=float(payload["w"]),
+        )
 
 
 @dataclass(frozen=True)
@@ -69,6 +86,26 @@ class ObjectPhysicsState:
             "damaged": self.damaged,
         }
 
+    @classmethod
+    def from_wire(cls, payload: Mapping[str, Any]) -> "ObjectPhysicsState":
+        return cls(
+            object_id=str(payload["object_id"]),
+            prim_path=str(payload["prim_path"]),
+            target_zone=str(payload["target_zone"]),
+            zone=_optional_str(payload.get("zone")),
+            position=Vector3.from_wire(_optional_mapping(payload.get("position"))),
+            orientation_xyzw=Quaternion.from_wire(
+                _optional_mapping(payload.get("orientation_xyzw"))
+            ),
+            linear_velocity=Vector3.from_wire(_optional_mapping(payload.get("linear_velocity"))),
+            angular_velocity=Vector3.from_wire(
+                _optional_mapping(payload.get("angular_velocity"))
+            ),
+            at_rest=bool(payload.get("at_rest", True)),
+            held=bool(payload.get("held", False)),
+            damaged=bool(payload.get("damaged", False)),
+        )
+
 
 @dataclass(frozen=True)
 class CollisionEvent:
@@ -94,6 +131,16 @@ class CollisionEvent:
             "forbidden_contact": self.forbidden_contact,
         }
 
+    @classmethod
+    def from_wire(cls, payload: Mapping[str, Any]) -> "CollisionEvent":
+        return cls(
+            step=int(payload["step"]),
+            body_a=str(payload["body_a"]),
+            body_b=str(payload["body_b"]),
+            impulse=float(payload["impulse"]),
+            forbidden_contact=bool(payload.get("forbidden_contact", False)),
+        )
+
 
 @dataclass(frozen=True)
 class DamageEvent:
@@ -110,6 +157,15 @@ class DamageEvent:
             "severity": self.severity,
         }
 
+    @classmethod
+    def from_wire(cls, payload: Mapping[str, Any]) -> "DamageEvent":
+        return cls(
+            step=int(payload["step"]),
+            object_id=str(payload["object_id"]),
+            reason=str(payload["reason"]),
+            severity=float(payload["severity"]),
+        )
+
 
 @dataclass(frozen=True)
 class DroppedObjectEvent:
@@ -125,6 +181,16 @@ class DroppedObjectEvent:
             "zone": self.zone,
             "drop_height": self.drop_height,
         }
+
+    @classmethod
+    def from_wire(cls, payload: Mapping[str, Any]) -> "DroppedObjectEvent":
+        raw_drop_height = payload.get("drop_height")
+        return cls(
+            step=int(payload["step"]),
+            object_id=str(payload["object_id"]),
+            zone=_optional_str(payload.get("zone")),
+            drop_height=None if raw_drop_height is None else float(raw_drop_height),
+        )
 
 
 @dataclass(frozen=True)
@@ -151,6 +217,16 @@ class CleanlinessMeasurement:
             "cleaned_area_fraction": self.cleaned_area_fraction,
         }
 
+    @classmethod
+    def from_wire(cls, payload: Mapping[str, Any]) -> "CleanlinessMeasurement":
+        return cls(
+            zone=str(payload["zone"]),
+            surface_prim=str(payload["surface_prim"]),
+            dirt_before=float(payload["dirt_before"]),
+            dirt_after=float(payload["dirt_after"]),
+            cleaned_area_fraction=float(payload["cleaned_area_fraction"]),
+        )
+
 
 @dataclass(frozen=True)
 class PhysicsReplayArtifact:
@@ -166,7 +242,10 @@ class PhysicsReplayArtifact:
     sim_seed: int | None
     time_step: float
     step_count: int
+    action_count: int
+    robot_zone: str | None
     object_states: tuple[ObjectPhysicsState, ...]
+    invalid_actions: int = 0
     cleanliness: tuple[CleanlinessMeasurement, ...] = ()
     collisions: tuple[CollisionEvent, ...] = ()
     damage_events: tuple[DamageEvent, ...] = ()
@@ -189,6 +268,9 @@ class PhysicsReplayArtifact:
             "sim_seed": self.sim_seed,
             "time_step": self.time_step,
             "step_count": self.step_count,
+            "action_count": self.action_count,
+            "invalid_actions": self.invalid_actions,
+            "robot_zone": self.robot_zone,
             "object_states": [obj.to_private_wire() for obj in self.object_states],
             "cleanliness": [item.to_private_wire() for item in self.cleanliness],
             "collisions": [item.to_private_wire() for item in self.collisions],
@@ -207,6 +289,9 @@ class PhysicsReplayArtifact:
             "room_id": self.room_id,
             "artifact_hash": self.artifact_hash,
             "step_count": self.step_count,
+            "action_count": self.action_count,
+            "invalid_actions": self.invalid_actions,
+            "robot_zone": self.robot_zone,
             "object_states": [obj.to_public_summary() for obj in self.object_states],
             "cleanliness": [item.to_public_summary() for item in self.cleanliness],
             "collision_count": len(self.collisions),
@@ -217,6 +302,52 @@ class PhysicsReplayArtifact:
             "dropped_objects": [item.to_wire() for item in self.dropped_objects],
         }
 
+    @classmethod
+    def from_wire(cls, payload: Mapping[str, Any]) -> "PhysicsReplayArtifact":
+        schema_version = str(payload["schema_version"])
+        if schema_version != SCHEMA_VERSION:
+            raise ValueError(f"unsupported physics replay schema: {schema_version}")
+        raw_seed = payload.get("sim_seed")
+        artifact = cls(
+            adapter_name=str(payload["adapter_name"]),
+            room_id=str(payload["room_id"]),
+            scene_root=str(payload["scene_root"]),
+            sim_seed=None if raw_seed is None else int(raw_seed),
+            time_step=float(payload["time_step"]),
+            step_count=int(payload["step_count"]),
+            action_count=int(payload.get("action_count", payload["step_count"])),
+            robot_zone=_optional_str(payload.get("robot_zone")),
+            invalid_actions=int(payload.get("invalid_actions", 0)),
+            object_states=tuple(
+                ObjectPhysicsState.from_wire(_require_mapping(item))
+                for item in payload.get("object_states", ())
+            ),
+            cleanliness=tuple(
+                CleanlinessMeasurement.from_wire(_require_mapping(item))
+                for item in payload.get("cleanliness", ())
+            ),
+            collisions=tuple(
+                CollisionEvent.from_wire(_require_mapping(item))
+                for item in payload.get("collisions", ())
+            ),
+            damage_events=tuple(
+                DamageEvent.from_wire(_require_mapping(item))
+                for item in payload.get("damage_events", ())
+            ),
+            dropped_objects=tuple(
+                DroppedObjectEvent.from_wire(_require_mapping(item))
+                for item in payload.get("dropped_objects", ())
+            ),
+            command_log=tuple(
+                _require_mapping(item) for item in payload.get("command_log", ())
+            ),
+            schema_version=schema_version,
+        )
+        expected_hash = payload.get("artifact_hash")
+        if expected_hash is not None and str(expected_hash) != artifact.artifact_hash:
+            raise ValueError("physics replay artifact hash mismatch")
+        return artifact
+
 
 ReplayArtifact = PhysicsReplayArtifact
 
@@ -225,3 +356,21 @@ def _wire_or_none(value: Any) -> dict[str, object] | None:
     if value is None:
         return None
     return value.to_wire()
+
+
+def _optional_str(value: Any) -> str | None:
+    if value is None:
+        return None
+    return str(value)
+
+
+def _optional_mapping(value: Any) -> Mapping[str, Any] | None:
+    if value is None:
+        return None
+    return _require_mapping(value)
+
+
+def _require_mapping(value: Any) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise TypeError(f"expected mapping payload, got {type(value).__name__}")
+    return value

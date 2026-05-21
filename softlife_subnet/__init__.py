@@ -1,6 +1,7 @@
 """MVP primitives for a deterministic embodied-intelligence subnet."""
 
 from softlife_subnet.actions import Action, ActionType, Trajectory
+from softlife_subnet.artifact_ingest import replay_result_from_physics_artifact
 from softlife_subnet.isaac_adapter import IsaacSimSimulationAdapter
 from softlife_subnet.physics_artifacts import PhysicsReplayArtifact, ReplayArtifact
 from softlife_subnet.robotics import CompiledRobotCommand, SoftLifeTrajectoryProvider
@@ -21,4 +22,5 @@ __all__ = [
     "SimulationAdapter",
     "Trajectory",
     "Validator",
+    "replay_result_from_physics_artifact",
 ]

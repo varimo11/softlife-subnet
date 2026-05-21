@@ -62,11 +62,20 @@ env PYTHONPYCACHEPREFIX=/private/tmp/softlife_pycache python3 -m compileall -q s
 
 ```bash
 python3 integrations/isaac_lab/scripts/export_replay_bundle.py --seed 42 --out /tmp/softlife_seed42_bundle.json --pretty
+python3 integrations/isaac_lab/scripts/export_scene_usd.py --bundle /tmp/softlife_seed42_bundle.json --out /tmp/softlife_seed42_scene.usda
 ```
 
 This produces a validator-private JSON bundle for an Isaac Lab workstation:
 hidden room truth, scene manifest, miner trajectory, compiled robot commands,
-and the expected `softlife.physics_replay.v1` artifact schema.
+and the expected `softlife.physics_replay.v1` artifact schema. The second
+command exports a bootstrap USDA scene for Isaac/Omniverse inspection.
+
+Offline artifact round-trip check:
+
+```bash
+python3 integrations/isaac_lab/scripts/export_mock_physics_artifact.py --seed 42 --out /tmp/softlife_seed42_artifact.json --pretty
+python3 integrations/isaac_lab/scripts/score_physics_artifact.py --bundle /tmp/softlife_seed42_bundle.json --artifact /tmp/softlife_seed42_artifact.json --seed 42 --pretty
+```
 
 ## Docs
 
