@@ -4,8 +4,15 @@ import json
 import unittest
 
 from softlife_subnet.actions import Action, ActionType, Trajectory
+from softlife_subnet.isaac_adapter import IsaacSimSimulationAdapter, IsaacSimUnavailableError
 from softlife_subnet.leaderboard import Leaderboard
 from softlife_subnet.miners import HeuristicMiner, NoOpMiner
+from softlife_subnet.robotics import (
+    ActionProvider,
+    HotelRoomSceneManifest,
+    RobotCommandType,
+    SoftLifeTrajectoryProvider,
+)
 from softlife_subnet.room_generator import RoomGenerator
 from softlife_subnet.scoring import clamp_score
 from softlife_subnet.simulation import MockSimulationAdapter, ReplayResult, SimulationAdapter
@@ -85,6 +92,39 @@ class MvpTests(unittest.TestCase):
 
         self.assertIsInstance(adapter, SimulationAdapter)
         self.assertIsInstance(adapter.replay(room, Trajectory.from_actions(())), ReplayResult)
+
+    def test_trajectory_provider_compiles_robot_commands(self) -> None:
+        room = RoomGenerator().generate(42)
+        trajectory = Trajectory.from_actions(
+            (
+                Action.move_to_object("towel_1"),
+                Action.pick("towel_1"),
+                Action.move_to_zone("hamper"),
+                Action.place("towel_1", "hamper"),
+                Action.clean_surface("floor"),
+            )
+        )
+        manifest = HotelRoomSceneManifest.from_environment(room)
+        provider = SoftLifeTrajectoryProvider(trajectory, manifest)
+
+        commands = tuple(provider.commands())
+        command_types = {command.command_type for command in commands}
+
+        self.assertIsInstance(provider, ActionProvider)
+        self.assertEqual(len(commands), len(trajectory))
+        self.assertIn(RobotCommandType.APPROACH_OBJECT, command_types)
+        self.assertIn(RobotCommandType.GRASP_OBJECT, command_types)
+        self.assertIn(RobotCommandType.RELEASE_OBJECT, command_types)
+        json.dumps([command.to_wire() for command in commands], sort_keys=True)
+
+    def test_isaac_adapter_stub_keeps_dependency_boundary_clear(self) -> None:
+        room = RoomGenerator().generate(42)
+        trajectory = HeuristicMiner().solve(room.to_public())
+        adapter = IsaacSimSimulationAdapter()
+
+        self.assertIsInstance(adapter, SimulationAdapter)
+        with self.assertRaises(IsaacSimUnavailableError):
+            adapter.replay(room, trajectory)
 
     def test_replay_is_deterministic_and_does_not_mutate_private_state(self) -> None:
         room = RoomGenerator().generate(42)

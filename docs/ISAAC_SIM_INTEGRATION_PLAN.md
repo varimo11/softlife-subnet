@@ -10,7 +10,15 @@ Current contract:
 - Input: miner `Trajectory`
 - Output: `ReplayResult`
 
-Future adapter:
+Current Isaac-aligned scaffolding:
+
+- `HotelRoomSceneManifest`: deterministic symbolic state to USD prim/frame map.
+- `SoftLifeTrajectoryProvider`: Unitree-style action source for replay loops.
+- `CompiledRobotCommand`: robot-oriented primitive compiled from miner actions.
+- `IsaacSimSimulationAdapter`: optional backend boundary that currently raises a
+  clear dependency error instead of importing Isaac Lab in the lightweight MVP.
+
+Future adapter implementation:
 
 - `IsaacSimSimulationAdapter`
 - Loads or generates a hidden USD scene from validator state.

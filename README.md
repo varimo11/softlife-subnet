@@ -12,6 +12,8 @@ This is not a hotel management app. It is a lightweight evaluation market for em
 - `softlife_subnet.state`: private `EnvironmentState` and miner-facing `PublicRoomState` contracts.
 - `softlife_subnet.actions`: wire-friendly `Action` and `Trajectory` primitives.
 - `softlife_subnet.simulation`: `SimulationAdapter`, `MockSimulationAdapter`, and `ReplayResult`.
+- `softlife_subnet.robotics`: Unitree/Isaac-style action provider, command compiler, and scene manifest bridge.
+- `softlife_subnet.isaac_adapter`: optional Isaac Lab adapter stub kept outside the mock backend.
 - `softlife_subnet.scoring`: room readiness scoring.
 - `softlife_subnet.validators`: validator boundary and private challenge storage.
 - `softlife_subnet.miners`: miner interface and baseline heuristic miner.
@@ -58,11 +60,15 @@ env PYTHONPYCACHEPREFIX=/private/tmp/softlife_pycache python3 -m compileall -q s
 
 - `docs/THREAT_MODEL.md`: overfitting, invalid action spam, unsafe policies, scoring loopholes, seed leaks, validator manipulation, and replay nondeterminism.
 - `docs/ISAAC_SIM_INTEGRATION_PLAN.md`: mapping symbolic room state into USD scenes, deterministic hidden scene generation, replay logs, scoring, ROS2 bridge, and first visual demo.
+- `docs/ISAAC_TASK_MAPPING.md`: concrete zone/object/surface mappings into future USD prim paths and compiled robot commands.
+- `docs/UNITREE_ISAACLAB_REFERENCE.md`: notes absorbed from Unitree's Isaac Lab simulator architecture.
+- `docs/RENDERING_AND_DEMO_PATH.md`: how to render the current browser demo and the future Isaac Lab replay.
 - `docs/BITTENSOR_INTEGRATION_PLAN.md`: miner/validator interfaces, synapse shape, hidden evaluations, score-to-weight flow, Yuma mapping, and what is not implemented yet.
 
 ## Extension Points
 
-- Add `IsaacSimSimulationAdapter` behind the existing `SimulationAdapter` protocol.
+- Implement `IsaacSimSimulationAdapter` behind the existing `SimulationAdapter` protocol.
+- Feed `SoftLifeTrajectoryProvider` commands into an Isaac Lab control loop.
 - Replace `Validator` storage/evaluation with a Bittensor validator process.
 - Replace `Miner.solve()` implementations with policy inference, planning, ROS2 action servers, or remote miner RPC.
 - Add richer physics facts to `EnvironmentState` while preserving a reduced `PublicRoomState` for miners.
