@@ -8,6 +8,11 @@ from integrations.isaac_lab.softlife_isaac_lab.controllers import (
     CommandExecutionResult,
     StageReplayState,
 )
+from integrations.isaac_lab.softlife_isaac_lab.scene_spec import pose_for_zone
+from integrations.isaac_lab.softlife_isaac_lab.stage_truth import (
+    read_stage_cleanliness,
+    read_stage_object_states,
+)
 from softlife_subnet.physics_artifacts import (
     CleanlinessMeasurement,
     CollisionEvent,
@@ -266,6 +271,192 @@ class SimulatedUnitreeBackend:
         )
 
 
+class StageBackedUnitreeBackend:
+    """USD-stage implementation of the Unitree backend contract.
+
+    This backend is a workstation bridge between the pure dry run and a future
+    articulated Unitree controller. It executes the Unitree command mapping,
+    mutates USD object/surface prims, and snapshots final truth back from the
+    stage. It does not command robot joints, grippers, contacts, or dynamics.
+    """
+
+    backend_name = "stage_backed_unitree_backend_v1"
+
+    def __init__(
+        self,
+        *,
+        bundle_payload: Mapping[str, Any],
+        stage: Any,
+        state: StageReplayState | None = None,
+    ) -> None:
+        self.bundle_payload = bundle_payload
+        self.stage = stage
+        self.state = state or StageReplayState.from_bundle(bundle_payload)
+
+    @classmethod
+    def from_bundle(
+        cls,
+        bundle_payload: Mapping[str, Any],
+        *,
+        stage: Any,
+    ) -> "StageBackedUnitreeBackend":
+        return cls(bundle_payload=bundle_payload, stage=stage)
+
+    def navigate_to_frame(
+        self,
+        *,
+        target_frame: str,
+        zone: str,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        return self._apply(
+            {
+                "command_type": "navigate_to_frame",
+                "target_frame": target_frame,
+                "zone": zone,
+            },
+            sim_steps=sim_steps,
+        )
+
+    def approach_object(
+        self,
+        *,
+        object_id: str,
+        object_prim: str,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        return self._apply(
+            {
+                "command_type": "approach_object",
+                "target_frame": object_prim,
+                "object_id": object_id,
+            },
+            sim_steps=sim_steps,
+        )
+
+    def grasp_object(
+        self,
+        *,
+        object_id: str,
+        object_prim: str,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        return self._apply(
+            {
+                "command_type": "grasp_object",
+                "target_frame": object_prim,
+                "object_id": object_id,
+            },
+            sim_steps=sim_steps,
+        )
+
+    def release_object(
+        self,
+        *,
+        object_id: str,
+        target_frame: str,
+        zone: str,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        return self._apply(
+            {
+                "command_type": "release_object",
+                "target_frame": target_frame,
+                "object_id": object_id,
+                "zone": zone,
+            },
+            sim_steps=sim_steps,
+        )
+
+    def drop_in_receptacle(
+        self,
+        *,
+        object_id: str,
+        target_frame: str,
+        zone: str,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        return self._apply(
+            {
+                "command_type": "drop_in_receptacle",
+                "target_frame": target_frame,
+                "object_id": object_id,
+                "zone": zone,
+            },
+            sim_steps=sim_steps,
+        )
+
+    def wipe_surface(
+        self,
+        *,
+        surface_prim: str,
+        zone: str,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        return self._apply(
+            {
+                "command_type": "wipe_surface",
+                "target_frame": surface_prim,
+                "zone": zone,
+            },
+            sim_steps=sim_steps,
+        )
+
+    def hold_position(self, *, sim_steps: int) -> BackendCommandResult:
+        return self._apply({"command_type": "hold_position"}, sim_steps=sim_steps)
+
+    def snapshot(self) -> BackendSnapshot:
+        return BackendSnapshot(
+            room_id=self.state.room_id,
+            scene_root=self.state.scene_root,
+            sim_seed=self.state.sim_seed,
+            robot_zone=self.state.robot_zone,
+            object_states=read_stage_object_states(
+                stage=self.stage,
+                bundle_payload=self.bundle_payload,
+                held_object_id=self.state.held_object_id,
+            ),
+            cleanliness=read_stage_cleanliness(
+                stage=self.stage,
+                bundle_payload=self.bundle_payload,
+            ),
+        )
+
+    def _apply(
+        self,
+        command: Mapping[str, Any],
+        *,
+        sim_steps: int,
+    ) -> BackendCommandResult:
+        ok, message = self.state.apply_command(command)
+        if ok:
+            try:
+                self._sync_stage()
+            except Exception as exc:
+                ok = False
+                message = f"stage sync failed: {exc}"
+        return BackendCommandResult(
+            ok=ok,
+            message=message,
+            robot_zone_after=self.state.robot_zone,
+            held_object_after=self.state.held_object_id,
+            sim_steps=sim_steps,
+        )
+
+    def _sync_stage(self) -> None:
+        for object_id, zone in self.state.object_zones.items():
+            prim_path = self.state.object_prims.get(object_id)
+            if not prim_path:
+                continue
+            pose_zone = self.state.robot_zone if zone == "__held__" else zone
+            _set_stage_translation(self.stage, prim_path, pose_for_zone(pose_zone))
+
+        for zone, dirt in self.state.surface_dirt_after.items():
+            prim_path = self.state.surface_prims.get(zone)
+            if prim_path:
+                _set_stage_attribute(self.stage, prim_path, "softlife:dirt", float(dirt))
+
+
 class UnitreeIsaacReplayController:
     """Robot replay controller for future Unitree/Isaac execution.
 
@@ -478,6 +669,70 @@ def _required_str(value: Any, field_name: str) -> str:
 
 def _compiled_commands(bundle_payload: Mapping[str, Any]) -> tuple[Mapping[str, Any], ...]:
     return tuple(_mapping(command) for command in bundle_payload.get("compiled_commands", ()))
+
+
+def _set_stage_translation(
+    stage: Any,
+    prim_path: str,
+    value: tuple[float, float, float],
+) -> None:
+    prim = _stage_prim(stage, prim_path)
+    attr = _stage_attribute(prim, "xformOp:translate")
+    if attr is not None and _set_attribute_value(attr, value):
+        return
+
+    try:
+        from pxr import Gf, UsdGeom
+
+        xformable = UsdGeom.Xformable(prim)
+        vec = Gf.Vec3d(*value)
+        for op in xformable.GetOrderedXformOps():
+            if op.GetOpType() == UsdGeom.XformOp.TypeTranslate:
+                op.Set(vec)
+                return
+        xformable.AddTranslateOp().Set(vec)
+        return
+    except Exception as exc:
+        raise RuntimeError(f"could not set translation for {prim_path}") from exc
+
+
+def _set_stage_attribute(stage: Any, prim_path: str, attr_name: str, value: object) -> None:
+    prim = _stage_prim(stage, prim_path)
+    attr = _stage_attribute(prim, attr_name)
+    if attr is None:
+        raise RuntimeError(f"prim {prim_path} is missing attribute {attr_name}")
+    if not _set_attribute_value(attr, value):
+        raise RuntimeError(f"attribute {attr_name} on {prim_path} is not writable")
+
+
+def _stage_prim(stage: Any, prim_path: str) -> Any:
+    prim = stage.GetPrimAtPath(prim_path)
+    if prim is None:
+        raise RuntimeError(f"stage is missing prim {prim_path}")
+    if hasattr(prim, "IsValid") and not prim.IsValid():
+        raise RuntimeError(f"stage prim is invalid: {prim_path}")
+    return prim
+
+
+def _stage_attribute(prim: Any, attr_name: str) -> Any:
+    if not hasattr(prim, "GetAttribute"):
+        return None
+    attr = prim.GetAttribute(attr_name)
+    if attr is None:
+        return None
+    if hasattr(attr, "IsValid") and not attr.IsValid():
+        return None
+    return attr
+
+
+def _set_attribute_value(attr: Any, value: object) -> bool:
+    if hasattr(attr, "Set"):
+        attr.Set(value)
+        return True
+    if hasattr(attr, "value"):
+        attr.value = value
+        return True
+    return False
 
 
 def _mapping(value: Any) -> Mapping[str, Any]:

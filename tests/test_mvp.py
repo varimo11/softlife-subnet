@@ -27,6 +27,7 @@ from integrations.isaac_lab.softlife_isaac_lab.unitree_controller import (
     BackendCommandResult,
     BackendSnapshot,
     SimulatedUnitreeBackend,
+    StageBackedUnitreeBackend,
     UnitreeIsaacBackend,
     UnitreeIsaacControllerUnavailable,
     UnitreeIsaacReplayController,
@@ -394,6 +395,41 @@ class MvpTests(unittest.TestCase):
         self.assertEqual(surface_dirt["bed"], 0.0)
         self.assertEqual(score.readiness, 97.679)
 
+    def test_stage_backed_unitree_backend_updates_usd_stage(self) -> None:
+        bundle = build_isaac_replay_bundle(seed=42).to_wire()
+        initial_controller = StageReplayController.from_bundle(bundle)
+        stage = _FakeUsdStage.from_controller(initial_controller, bundle)
+        backend = StageBackedUnitreeBackend.from_bundle(bundle, stage=stage)
+        controller = UnitreeIsaacReplayController.from_bundle(bundle, backend=backend)
+
+        for command in bundle["compiled_commands"]:
+            controller.execute(command, sim_steps=12)
+        artifact = controller.to_artifact(
+            adapter_name="stage_backed_unitree_test",
+            action_count=len(bundle["compiled_commands"]),
+            step_count=len(bundle["compiled_commands"]) * 12,
+        )
+        object_zones = {item.object_id: item.zone for item in artifact.object_states}
+        surface_dirt = {item.zone: item.dirt_after for item in artifact.cleanliness}
+        wrapper_prim = bundle["scene_manifest"]["object_prims"]["wrapper_1"]
+        bed_surface = bundle["scene_manifest"]["surface_prims"]["bed"]
+
+        self.assertIsInstance(backend, UnitreeIsaacBackend)
+        self.assertEqual(
+            controller.command_log[0]["backend_name"],
+            "stage_backed_unitree_backend_v1",
+        )
+        self.assertEqual(object_zones["wrapper_1"], "trash_bin")
+        self.assertEqual(surface_dirt["bed"], 0.0)
+        self.assertEqual(
+            stage.GetPrimAtPath(wrapper_prim).GetAttribute("xformOp:translate").Get(),
+            pose_for_zone("trash_bin"),
+        )
+        self.assertEqual(
+            stage.GetPrimAtPath(bed_surface).GetAttribute("softlife:dirt").Get(),
+            0.0,
+        )
+
     def test_isaac_workflow_validation_writes_artifacts_for_seeds(self) -> None:
         with TemporaryDirectory() as tmpdir:
             report = validate_isaac_workflow(out_dir=tmpdir, seeds=(7, 42))
@@ -749,6 +785,9 @@ class _FakeUsdAttribute:
 
     def Get(self) -> object:
         return self.value
+
+    def Set(self, value: object) -> None:
+        self.value = value
 
     def IsValid(self) -> bool:
         return True

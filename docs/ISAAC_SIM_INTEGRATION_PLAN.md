@@ -34,6 +34,9 @@ Current Isaac-aligned scaffolding:
 - `UnitreeIsaacBackend`: protocol for the concrete Isaac Lab / Unitree backend
   that owns env handles, articulations, gripper commands, contacts, cameras,
   and physics snapshots.
+- `StageBackedUnitreeBackend`: transitional Isaac backend that lets the Unitree
+  controller mutate and snapshot a USD stage before articulated robot control is
+  available.
 - `score_physics_artifact.py`: ingestion path from Isaac physics truth back into
   the validator scorer.
 - `IsaacSimSimulationAdapter`: optional backend boundary that currently raises a
@@ -244,10 +247,11 @@ That keeps the validator handoff, physics artifact schema, and scoring bridge
 stable while the execution backend advances from stage replay to Unitree robot
 control.
 
-The Unitree path now has its own controller mapper plus a
-`SimulatedUnitreeBackend` for dependency-free dry runs. The remaining real
-implementation is the concrete Isaac/Unitree backend behind
-`UnitreeIsaacBackend`. That backend should:
+The Unitree path now has its own controller mapper, a `SimulatedUnitreeBackend`
+for dependency-free dry runs, and a `StageBackedUnitreeBackend` for Isaac
+workstation runs that mutate USD prims. The remaining real implementation is
+the articulated Isaac/Unitree backend behind `UnitreeIsaacBackend`. That
+backend should:
 
 - open or receive an Isaac Lab environment/scene;
 - resolve target frames and object prims from the bundle manifest;

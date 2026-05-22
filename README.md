@@ -90,14 +90,16 @@ same bundle/scene/artifact/scoring flow under Isaac Sim. With
 
 The Unitree controller path has a local dry-run backend for validating command
 mapping and artifact ingestion without Isaac physics. On an Isaac workstation,
-run the same script with Isaac Sim's Python and omit `--dry-run`:
+run the same script with Isaac Sim's Python and `--stage-backend` to execute the
+Unitree controller against a USD stage-backed backend:
 
 ```bash
-./python.sh integrations/isaac_lab/scripts/run_unitree_isaac_replay.py --bundle /tmp/softlife_seed42_bundle.json --out-artifact /tmp/softlife_seed42_unitree_artifact.json
+./python.sh integrations/isaac_lab/scripts/run_unitree_isaac_replay.py --bundle /tmp/softlife_seed42_bundle.json --out-artifact /tmp/softlife_seed42_unitree_artifact.json --stage-backend --render-dir /tmp/softlife_unitree_frames
 ```
 
-The non-dry-run command still requires a concrete `UnitreeIsaacBackend`, which
-is where Isaac Lab robot/env handles and Unitree gripper/control APIs plug in.
+Plain non-dry-run execution still requires the future articulated
+`UnitreeIsaacBackend`, where Isaac Lab robot/env handles and Unitree
+gripper/control APIs plug in.
 
 ## Docs
 

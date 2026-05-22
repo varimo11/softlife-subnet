@@ -30,20 +30,8 @@ def build_stage_truth_artifact(
     backends should follow the same pattern with richer physics telemetry.
     """
 
-    private_state = _mapping(bundle_payload["validator_private_state"])
-    public_state = _mapping(bundle_payload["public_state"])
     scene_manifest = _mapping(bundle_payload["scene_manifest"])
-    object_prims = {
-        str(key): str(value)
-        for key, value in _mapping(scene_manifest["object_prims"]).items()
-    }
-    surface_prims = {
-        str(key): str(value)
-        for key, value in _mapping(scene_manifest["surface_prims"]).items()
-    }
-    objects = tuple(_mapping(item) for item in private_state.get("objects", ()))
-    surfaces = tuple(_mapping(item) for item in private_state.get("surfaces", ()))
-    zones = tuple(str(zone) for zone in public_state.get("zones", ()))
+    private_state = _mapping(bundle_payload["validator_private_state"])
     raw_seed = private_state.get("private_seed")
 
     return PhysicsReplayArtifact(
@@ -58,25 +46,65 @@ def build_stage_truth_artifact(
         invalid_actions=sum(
             1 for command in controller.command_log if not bool(command.get("ok", True))
         ),
-        object_states=tuple(
-            _object_state_from_stage(
-                stage=stage,
-                obj=obj,
-                object_prims=object_prims,
-                zones=zones,
-                held_object_id=controller.state.held_object_id,
-            )
-            for obj in sorted(objects, key=lambda item: str(item["object_id"]))
+        object_states=read_stage_object_states(
+            stage=stage,
+            bundle_payload=bundle_payload,
+            held_object_id=controller.state.held_object_id,
         ),
-        cleanliness=tuple(
-            _cleanliness_from_stage(
-                stage=stage,
-                surface=surface,
-                surface_prims=surface_prims,
-            )
-            for surface in sorted(surfaces, key=lambda item: str(item["zone"]))
+        cleanliness=read_stage_cleanliness(
+            stage=stage,
+            bundle_payload=bundle_payload,
         ),
         command_log=tuple(controller.command_log),
+    )
+
+
+def read_stage_object_states(
+    *,
+    stage: Any,
+    bundle_payload: Mapping[str, Any],
+    held_object_id: str | None = None,
+) -> tuple[ObjectPhysicsState, ...]:
+    private_state = _mapping(bundle_payload["validator_private_state"])
+    public_state = _mapping(bundle_payload["public_state"])
+    scene_manifest = _mapping(bundle_payload["scene_manifest"])
+    object_prims = {
+        str(key): str(value)
+        for key, value in _mapping(scene_manifest["object_prims"]).items()
+    }
+    objects = tuple(_mapping(item) for item in private_state.get("objects", ()))
+    zones = tuple(str(zone) for zone in public_state.get("zones", ()))
+    return tuple(
+        _object_state_from_stage(
+            stage=stage,
+            obj=obj,
+            object_prims=object_prims,
+            zones=zones,
+            held_object_id=held_object_id,
+        )
+        for obj in sorted(objects, key=lambda item: str(item["object_id"]))
+    )
+
+
+def read_stage_cleanliness(
+    *,
+    stage: Any,
+    bundle_payload: Mapping[str, Any],
+) -> tuple[CleanlinessMeasurement, ...]:
+    private_state = _mapping(bundle_payload["validator_private_state"])
+    scene_manifest = _mapping(bundle_payload["scene_manifest"])
+    surface_prims = {
+        str(key): str(value)
+        for key, value in _mapping(scene_manifest["surface_prims"]).items()
+    }
+    surfaces = tuple(_mapping(item) for item in private_state.get("surfaces", ()))
+    return tuple(
+        _cleanliness_from_stage(
+            stage=stage,
+            surface=surface,
+            surface_prims=surface_prims,
+        )
+        for surface in sorted(surfaces, key=lambda item: str(item["zone"]))
     )
 
 

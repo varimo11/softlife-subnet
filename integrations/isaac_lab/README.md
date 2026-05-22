@@ -20,6 +20,8 @@ Implemented here:
   protocol for real Isaac Lab / Unitree execution.
 - `SimulatedUnitreeBackend` for dependency-free dry runs of the Unitree command
   path and artifact scoring contract.
+- `StageBackedUnitreeBackend` for running the Unitree controller against an
+  Isaac USD stage before articulated Unitree robot control is connected.
 - Mock physics artifact export for offline schema testing.
 - Physics artifact scoring back into Soft Life readiness.
 - Deterministic scene manifest and compiled robot commands.
@@ -131,11 +133,16 @@ The intended runtime command is:
 ```bash
 ./python.sh /path/to/softlife-subnet-demo/integrations/isaac_lab/scripts/run_unitree_isaac_replay.py \
   --bundle /tmp/softlife_seed42_bundle.json \
-  --out-artifact /tmp/softlife_seed42_unitree_artifact.json
+  --out-artifact /tmp/softlife_seed42_unitree_artifact.json \
+  --stage-backend \
+  --render-dir /tmp/softlife_unitree_frames
 ```
 
-Today this fails clearly until a concrete backend satisfying
-`UnitreeIsaacBackend` is configured.
+This uses `StageBackedUnitreeBackend`: the Unitree controller executes through
+the backend interface, mutates USD object/surface prims, and snapshots stage
+truth. It does not yet drive Unitree articulation, grippers, contacts, or robot
+dynamics. Plain non-dry-run execution still fails clearly until an articulated
+backend satisfying `UnitreeIsaacBackend` is configured.
 
 For a local dependency-free check of the Unitree command path:
 

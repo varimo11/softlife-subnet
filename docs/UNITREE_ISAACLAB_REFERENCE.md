@@ -140,6 +140,7 @@ Unitree's structure:
 - `integrations.isaac_lab.softlife_isaac_lab.unitree_controller.UnitreeIsaacReplayController`
 - `integrations.isaac_lab.softlife_isaac_lab.unitree_controller.UnitreeIsaacBackend`
 - `integrations.isaac_lab.softlife_isaac_lab.unitree_controller.SimulatedUnitreeBackend`
+- `integrations.isaac_lab.softlife_isaac_lab.unitree_controller.StageBackedUnitreeBackend`
 - `integrations/isaac_lab/`
 - `docs/ISAAC_TASK_MAPPING.md`
 - `docs/RENDERING_AND_DEMO_PATH.md`
@@ -150,10 +151,11 @@ without breaking the current mock physics demo.
 ## Suggested Next Milestones
 
 1. Run `validate_isaac_workflow.py --real-stage --capture-frames` on an Isaac workstation.
-2. Implement a concrete Isaac/Unitree backend behind `UnitreeIsaacBackend`.
-3. Render one successful Unitree-controlled Isaac replay from a fixed validator camera.
-4. Feed Unitree/Isaac physics truth back into the existing `ReplayResult`.
-5. Only after that, add optional Unitree/DDS bridge support.
+2. Run `run_unitree_isaac_replay.py --stage-backend` with Isaac Sim's Python.
+3. Implement an articulated Isaac/Unitree backend behind `UnitreeIsaacBackend`.
+4. Render one successful Unitree-controlled Isaac replay from a fixed validator camera.
+5. Feed Unitree/Isaac physics truth back into the existing `ReplayResult`.
+6. Only after that, add optional Unitree/DDS bridge support.
 
 ## Important Constraints
 
