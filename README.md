@@ -82,7 +82,8 @@ python3 integrations/isaac_lab/scripts/validate_isaac_workflow.py --out-dir /tmp
 
 On an Isaac Sim workstation, run `run_isaac_stage_replay.py` with Isaac Sim's
 Python instead of `--dry-run` to load the scene, apply compiled commands on the
-USD stage, optionally capture viewport frames, and write the validator artifact.
+USD stage, read final prim transforms and surface dirt back from the stage,
+optionally capture viewport frames, and write the validator artifact.
 Use `validate_isaac_workflow.py --real-stage` as the acceptance gate for the
 same bundle/scene/artifact/scoring flow under Isaac Sim.
 

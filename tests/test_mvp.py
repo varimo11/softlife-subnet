@@ -19,6 +19,8 @@ from integrations.isaac_lab.softlife_isaac_lab.controllers import (
     RobotReplayController,
     StageReplayController,
 )
+from integrations.isaac_lab.softlife_isaac_lab.scene_spec import pose_for_zone
+from integrations.isaac_lab.softlife_isaac_lab.stage_truth import build_stage_truth_artifact
 from integrations.isaac_lab.softlife_isaac_lab.unitree_controller import (
     BackendCommandResult,
     BackendSnapshot,
@@ -298,6 +300,38 @@ class MvpTests(unittest.TestCase):
         self.assertEqual(result.robot_zone_after, "nightstand")
         self.assertEqual(controller.command_log[0]["sim_steps"], 12)
         self.assertEqual(artifact.command_log[0]["message"], "approached pillow_1")
+
+    def test_stage_truth_artifact_reads_final_usd_stage_values(self) -> None:
+        bundle = build_isaac_replay_bundle(seed=42).to_wire()
+        controller = StageReplayController.from_bundle(bundle)
+        for command in bundle["compiled_commands"]:
+            controller.execute(command, sim_steps=12)
+        stage = _FakeUsdStage.from_controller(controller, bundle)
+        stage.set_translation(
+            bundle["scene_manifest"]["object_prims"]["wrapper_1"],
+            pose_for_zone("closet"),
+        )
+        stage.set_attribute(
+            bundle["scene_manifest"]["surface_prims"]["bed"],
+            "softlife:dirt",
+            0.2,
+        )
+
+        artifact = build_stage_truth_artifact(
+            stage=stage,
+            bundle_payload=bundle,
+            controller=controller,
+            adapter_name="stage_truth_test",
+            action_count=len(bundle["compiled_commands"]),
+            step_count=len(bundle["compiled_commands"]) * 12,
+        )
+        object_zones = {item.object_id: item.zone for item in artifact.object_states}
+        surface_dirt = {item.zone: item.dirt_after for item in artifact.cleanliness}
+
+        self.assertEqual(object_zones["wrapper_1"], "closet")
+        self.assertEqual(surface_dirt["bed"], 0.2)
+        self.assertEqual(artifact.invalid_actions, 0)
+        self.assertEqual(len(artifact.command_log), len(bundle["compiled_commands"]))
 
     def test_unitree_controller_maps_commands_to_backend(self) -> None:
         bundle = build_isaac_replay_bundle(seed=42).to_wire()
@@ -628,6 +662,67 @@ class _FakeUnitreeBackend:
             held_object_after=self.held_object_id,
             sim_steps=sim_steps,
         )
+
+
+class _FakeUsdStage:
+    def __init__(self, prims: dict[str, "_FakeUsdPrim"]) -> None:
+        self.prims = prims
+
+    @classmethod
+    def from_controller(
+        cls,
+        controller: StageReplayController,
+        bundle: dict[str, object],
+    ) -> "_FakeUsdStage":
+        manifest = bundle["scene_manifest"]
+        prims: dict[str, _FakeUsdPrim] = {}
+        for object_id, prim_path in manifest["object_prims"].items():
+            zone = controller.state.object_zones[object_id]
+            prims[prim_path] = _FakeUsdPrim(
+                {"xformOp:translate": pose_for_zone(zone)}
+            )
+        for zone, prim_path in manifest["surface_prims"].items():
+            prims[prim_path] = _FakeUsdPrim(
+                {
+                    "xformOp:translate": pose_for_zone(zone),
+                    "softlife:dirt": controller.state.surface_dirt_after[zone],
+                }
+            )
+        return cls(prims)
+
+    def GetPrimAtPath(self, prim_path: str) -> "_FakeUsdPrim | None":
+        return self.prims.get(prim_path)
+
+    def set_translation(self, prim_path: str, value: tuple[float, float, float]) -> None:
+        self.prims[prim_path].attributes["xformOp:translate"].value = value
+
+    def set_attribute(self, prim_path: str, attr_name: str, value: object) -> None:
+        self.prims[prim_path].attributes[attr_name] = _FakeUsdAttribute(value)
+
+
+class _FakeUsdPrim:
+    def __init__(self, attributes: dict[str, object]) -> None:
+        self.attributes = {
+            key: _FakeUsdAttribute(value)
+            for key, value in attributes.items()
+        }
+
+    def GetAttribute(self, attr_name: str) -> "_FakeUsdAttribute | None":
+        return self.attributes.get(attr_name)
+
+    def IsValid(self) -> bool:
+        return True
+
+
+class _FakeUsdAttribute:
+    def __init__(self, value: object) -> None:
+        self.value = value
+
+    def Get(self) -> object:
+        return self.value
+
+    def IsValid(self) -> bool:
+        return True
 
 
 if __name__ == "__main__":

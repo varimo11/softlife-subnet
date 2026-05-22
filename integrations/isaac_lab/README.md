@@ -12,6 +12,8 @@ Implemented here:
 - Lightweight USDA scene export for Isaac/Omniverse inspection.
 - Stage-level Isaac Sim replay runner with lazy `isaacsim` / `omni.isaac.kit`
   imports.
+- Stage truth extraction from USD prim transforms and `softlife:dirt`
+  attributes into `softlife.physics_replay.v1`.
 - `RobotReplayController` boundary with a `StageReplayController` implementation,
   ready to be replaced by a Unitree/Isaac controller.
 - `UnitreeIsaacReplayController` command mapper plus `UnitreeIsaacBackend`
@@ -98,8 +100,9 @@ python3 integrations/isaac_lab/scripts/run_isaac_stage_replay.py \
 ```
 
 This runner loads the USD scene, applies compiled command effects to stage
-prims, advances Isaac Sim, optionally captures viewport frames, and writes the
-same physics artifact schema used by the validator. It is the first runnable
+prims, advances Isaac Sim, reads final USD prim transforms and surface dirt
+attributes back from the stage, optionally captures viewport frames, and writes
+the same physics artifact schema used by the validator. It is the first runnable
 Isaac bridge; the next step is replacing stage-level object motion with a
 Unitree robot controller and real contact-rich physics.
 

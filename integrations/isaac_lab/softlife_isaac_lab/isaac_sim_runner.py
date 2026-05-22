@@ -11,6 +11,7 @@ from typing import Any, Mapping
 from integrations.isaac_lab.softlife_isaac_lab.config import SoftLifeIsaacRunConfig
 from integrations.isaac_lab.softlife_isaac_lab.controllers import StageReplayController
 from integrations.isaac_lab.softlife_isaac_lab.scene_spec import pose_for_zone
+from integrations.isaac_lab.softlife_isaac_lab.stage_truth import build_stage_truth_artifact
 from integrations.isaac_lab.softlife_isaac_lab.usd_export import write_usda_scene
 from softlife_subnet.physics_artifacts import PhysicsReplayArtifact
 
@@ -105,10 +106,15 @@ def run_isaac_sim_stage_replay(
                 render_dir=None if render_dir is None else Path(render_dir),
                 app=app,
             )
-            artifact = controller.to_artifact(
+            commands = _compiled_commands(bundle_payload)
+            artifact = build_stage_truth_artifact(
+                stage=_current_stage(),
+                bundle_payload=bundle_payload,
+                controller=controller,
                 adapter_name="isaac_sim_stage_replay_v1",
-                action_count=len(_compiled_commands(bundle_payload)),
-                step_count=len(_compiled_commands(bundle_payload)) * frame_steps_per_command,
+                action_count=len(commands),
+                step_count=len(commands) * frame_steps_per_command,
+                time_step=run_config.physics_dt,
             )
             if output_artifact_path is not None:
                 _write_artifact(artifact, output_artifact_path)
@@ -275,4 +281,3 @@ def _mapping(value: Any) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
         raise TypeError(f"expected mapping, got {type(value).__name__}")
     return value
-

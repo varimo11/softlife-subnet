@@ -21,6 +21,7 @@ from integrations.isaac_lab.softlife_isaac_lab.replay_runner import (
     find_isaac_lab_package,
     run_replay_bundle,
 )
+from integrations.isaac_lab.softlife_isaac_lab.stage_truth import build_stage_truth_artifact
 from integrations.isaac_lab.softlife_isaac_lab.unitree_controller import (
     BackendCommandResult,
     BackendSnapshot,
@@ -53,6 +54,7 @@ __all__ = [
     "UnitreeIsaacControllerUnavailable",
     "UnitreeIsaacReplayController",
     "build_stage_level_artifact",
+    "build_stage_truth_artifact",
     "build_unitree_dry_run_artifact",
     "find_isaac_lab_package",
     "find_isaac_sim_package",

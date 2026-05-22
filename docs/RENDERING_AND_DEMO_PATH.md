@@ -38,7 +38,8 @@ Rendering then happens inside Isaac Sim/Isaac Lab:
 4. Use headless mode for validator batch scoring.
 5. Capture replay camera streams from fixed validator cameras for public demos.
 6. Export MP4 clips or image sequences.
-7. Store `softlife.physics_replay.v1` artifacts separately from public miner challenge data.
+7. Read final USD prim transforms and surface dirt into `softlife.physics_replay.v1`.
+8. Store physics artifacts separately from public miner challenge data.
 
 The current bootstrap USD export is:
 
