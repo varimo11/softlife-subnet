@@ -77,11 +77,14 @@ python3 integrations/isaac_lab/scripts/export_mock_physics_artifact.py --seed 42
 python3 integrations/isaac_lab/scripts/score_physics_artifact.py --bundle /tmp/softlife_seed42_bundle.json --artifact /tmp/softlife_seed42_artifact.json --seed 42 --pretty
 python3 integrations/isaac_lab/scripts/run_isaac_stage_replay.py --bundle /tmp/softlife_seed42_bundle.json --out-artifact /tmp/softlife_seed42_stage_artifact.json --dry-run
 python3 integrations/isaac_lab/scripts/run_unitree_isaac_replay.py --bundle /tmp/softlife_seed42_bundle.json --out-artifact /tmp/softlife_seed42_unitree_artifact.json --dry-run
+python3 integrations/isaac_lab/scripts/validate_isaac_workflow.py --out-dir /tmp/softlife_isaac_validation --pretty
 ```
 
 On an Isaac Sim workstation, run `run_isaac_stage_replay.py` with Isaac Sim's
 Python instead of `--dry-run` to load the scene, apply compiled commands on the
 USD stage, optionally capture viewport frames, and write the validator artifact.
+Use `validate_isaac_workflow.py --real-stage` as the acceptance gate for the
+same bundle/scene/artifact/scoring flow under Isaac Sim.
 
 The Unitree controller path has a local dry-run backend for validating command
 mapping and artifact ingestion without Isaac physics. On an Isaac workstation,

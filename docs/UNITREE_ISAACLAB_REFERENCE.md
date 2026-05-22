@@ -149,10 +149,10 @@ without breaking the current mock physics demo.
 
 ## Suggested Next Milestones
 
-1. Run the current Unitree dry-run path against every canonical validator bundle.
+1. Run `validate_isaac_workflow.py --real-stage --capture-frames` on an Isaac workstation.
 2. Implement a concrete Isaac/Unitree backend behind `UnitreeIsaacBackend`.
-3. Render one successful Isaac replay from a fixed validator camera.
-4. Feed Isaac physics truth back into the existing `ReplayResult`.
+3. Render one successful Unitree-controlled Isaac replay from a fixed validator camera.
+4. Feed Unitree/Isaac physics truth back into the existing `ReplayResult`.
 5. Only after that, add optional Unitree/DDS bridge support.
 
 ## Important Constraints

@@ -22,6 +22,8 @@ Implemented here:
 - Physics artifact scoring back into Soft Life readiness.
 - Deterministic scene manifest and compiled robot commands.
 - Lazy Isaac Lab dependency detection.
+- Canonical workflow validation across bundle export, USD export, stage replay,
+  Unitree dry run, artifact hashes, and scoring.
 - A task contract for the first hotel-room restore demo.
 
 Still requiring an Isaac-capable machine:
@@ -61,6 +63,7 @@ not the final high-fidelity hotel room.
 python3 integrations/isaac_lab/scripts/export_mock_physics_artifact.py --seed 42 --out /tmp/softlife_seed42_artifact.json --pretty
 python3 integrations/isaac_lab/scripts/score_physics_artifact.py --bundle /tmp/softlife_seed42_bundle.json --artifact /tmp/softlife_seed42_artifact.json --seed 42 --pretty
 python3 integrations/isaac_lab/scripts/run_unitree_isaac_replay.py --bundle /tmp/softlife_seed42_bundle.json --out-artifact /tmp/softlife_seed42_unitree_artifact.json --dry-run
+python3 integrations/isaac_lab/scripts/validate_isaac_workflow.py --out-dir /tmp/softlife_isaac_validation --pretty
 ```
 
 The first command emits the exact `softlife.physics_replay.v1` schema that the
@@ -68,6 +71,10 @@ real Isaac task must return. The second command ingests that artifact into the
 validator scoring path. The Unitree dry run executes compiled commands through
 `UnitreeIsaacReplayController` and `SimulatedUnitreeBackend`; it validates the
 controller/artifact boundary, but it does not run Isaac physics.
+
+`validate_isaac_workflow.py` is the local acceptance gate. It writes replay
+bundles, USDA scenes, stage artifacts, Unitree dry-run artifacts, and a workflow
+report for the canonical seeds.
 
 ## Run The Stage-Level Isaac Sim Replay
 
@@ -95,6 +102,16 @@ prims, advances Isaac Sim, optionally captures viewport frames, and writes the
 same physics artifact schema used by the validator. It is the first runnable
 Isaac bridge; the next step is replacing stage-level object motion with a
 Unitree robot controller and real contact-rich physics.
+
+For a multi-seed workstation gate:
+
+```bash
+./python.sh /path/to/softlife-subnet-demo/integrations/isaac_lab/scripts/validate_isaac_workflow.py \
+  --out-dir /tmp/softlife_isaac_validation \
+  --real-stage \
+  --capture-frames \
+  --pretty
+```
 
 The replacement point is `RobotReplayController`. A future
 `UnitreeIsaacReplayController` now implements the same `execute(...)` and

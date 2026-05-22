@@ -12,9 +12,9 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from integrations.isaac_lab.softlife_isaac_lab.unitree_controller import (  # noqa: E402
-    SimulatedUnitreeBackend,
     UnitreeIsaacControllerUnavailable,
     UnitreeIsaacReplayController,
+    build_unitree_dry_run_artifact,
 )
 from integrations.isaac_lab.softlife_isaac_lab.usd_export import load_bundle_payload  # noqa: E402
 
@@ -37,28 +37,25 @@ def main() -> None:
     args = parser.parse_args()
 
     bundle_payload = load_bundle_payload(args.bundle)
-    backend = SimulatedUnitreeBackend.from_bundle(bundle_payload) if args.dry_run else None
-    try:
-        controller = UnitreeIsaacReplayController.from_bundle(
+    if args.dry_run:
+        artifact = build_unitree_dry_run_artifact(
             bundle_payload,
-            backend=backend,
+            frame_steps_per_command=args.sim_steps,
         )
-    except UnitreeIsaacControllerUnavailable as exc:
-        print(f"Unitree/Isaac backend unavailable: {exc}", file=sys.stderr)
-        raise SystemExit(2) from exc
-    commands = tuple(bundle_payload.get("compiled_commands", ()))
-    for command in commands:
-        controller.execute(command, sim_steps=args.sim_steps)
-
-    artifact = controller.to_artifact(
-        adapter_name=(
-            "unitree_isaac_replay_dry_run_v1"
-            if args.dry_run
-            else "unitree_isaac_replay_v1"
-        ),
-        action_count=len(commands),
-        step_count=len(commands) * args.sim_steps,
-    )
+    else:
+        try:
+            controller = UnitreeIsaacReplayController.from_bundle(bundle_payload)
+        except UnitreeIsaacControllerUnavailable as exc:
+            print(f"Unitree/Isaac backend unavailable: {exc}", file=sys.stderr)
+            raise SystemExit(2) from exc
+        commands = tuple(bundle_payload.get("compiled_commands", ()))
+        for command in commands:
+            controller.execute(command, sim_steps=args.sim_steps)
+        artifact = controller.to_artifact(
+            adapter_name="unitree_isaac_replay_v1",
+            action_count=len(commands),
+            step_count=len(commands) * args.sim_steps,
+        )
     output_path = Path(args.out_artifact)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(

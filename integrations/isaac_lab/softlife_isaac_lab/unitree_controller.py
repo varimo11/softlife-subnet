@@ -425,6 +425,30 @@ class UnitreeIsaacReplayController:
         )
 
 
+def build_unitree_dry_run_artifact(
+    bundle_payload: Mapping[str, Any],
+    *,
+    adapter_name: str = "unitree_isaac_replay_dry_run_v1",
+    frame_steps_per_command: int = 12,
+) -> PhysicsReplayArtifact:
+    """Replay compiled commands through the simulated Unitree backend."""
+
+    commands = _compiled_commands(bundle_payload)
+    backend = SimulatedUnitreeBackend.from_bundle(bundle_payload)
+    controller = UnitreeIsaacReplayController.from_bundle(
+        bundle_payload,
+        backend=backend,
+    )
+    for command in commands:
+        controller.execute(command, sim_steps=frame_steps_per_command)
+
+    return controller.to_artifact(
+        adapter_name=adapter_name,
+        action_count=len(commands),
+        step_count=len(commands) * frame_steps_per_command,
+    )
+
+
 def create_unitree_isaac_backend(bundle_payload: Mapping[str, Any]) -> UnitreeIsaacBackend:
     """Create the real Unitree/Isaac backend when dependencies are available.
 
@@ -450,6 +474,16 @@ def _required_str(value: Any, field_name: str) -> str:
     if value is None:
         raise ValueError(f"command is missing {field_name}")
     return str(value)
+
+
+def _compiled_commands(bundle_payload: Mapping[str, Any]) -> tuple[Mapping[str, Any], ...]:
+    return tuple(_mapping(command) for command in bundle_payload.get("compiled_commands", ()))
+
+
+def _mapping(value: Any) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise TypeError(f"expected mapping, got {type(value).__name__}")
+    return value
 
 
 def _has_package(name: str) -> bool:

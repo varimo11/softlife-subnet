@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from tempfile import TemporaryDirectory
 
 from integrations.isaac_lab.softlife_isaac_lab.replay_runner import (
     IsaacLabNotAvailable,
@@ -27,6 +28,9 @@ from integrations.isaac_lab.softlife_isaac_lab.unitree_controller import (
     UnitreeIsaacReplayController,
 )
 from integrations.isaac_lab.softlife_isaac_lab.usd_export import render_usda_scene
+from integrations.isaac_lab.softlife_isaac_lab.workflow_validation import (
+    validate_isaac_workflow,
+)
 from softlife_subnet.actions import Action, ActionType, Trajectory
 from softlife_subnet.artifact_ingest import replay_result_from_physics_artifact
 from softlife_subnet.isaac_handoff import build_isaac_replay_bundle
@@ -353,6 +357,30 @@ class MvpTests(unittest.TestCase):
         self.assertEqual(object_zones["wrapper_1"], "trash_bin")
         self.assertEqual(surface_dirt["bed"], 0.0)
         self.assertEqual(score.readiness, 97.679)
+
+    def test_isaac_workflow_validation_writes_artifacts_for_seeds(self) -> None:
+        with TemporaryDirectory() as tmpdir:
+            report = validate_isaac_workflow(out_dir=tmpdir, seeds=(7, 42))
+            report_wire = report.to_wire()
+
+            self.assertTrue(report.ok)
+            self.assertEqual(report_wire["schema_version"], "softlife.isaac_workflow_report.v1")
+            self.assertEqual(report_wire["seeds"], [7, 42])
+            self.assertFalse(report_wire["real_stage_requested"])
+            for result in report.results:
+                self.assertTrue(result.ok)
+                self.assertTrue(result.bundle_path.exists())
+                self.assertTrue(result.scene_path.exists())
+                self.assertTrue(result.stage.artifact_path.exists())
+                self.assertTrue(result.unitree_dry_run.artifact_path.exists())
+                self.assertNotIn("private_seed", result.bundle_path.read_text(encoding="utf-8"))
+                self.assertIn("def Xform", result.scene_path.read_text(encoding="utf-8"))
+                self.assertEqual(result.stage.command_log_count, result.command_count)
+                self.assertEqual(result.unitree_dry_run.command_log_count, result.command_count)
+                self.assertEqual(result.stage.invalid_actions, 0)
+                self.assertEqual(result.unitree_dry_run.invalid_actions, 0)
+                self.assertGreater(result.stage.readiness or 0.0, 0.0)
+                self.assertGreater(result.unitree_dry_run.readiness or 0.0, 0.0)
 
     def test_unitree_controller_fails_clearly_without_backend(self) -> None:
         bundle = build_isaac_replay_bundle(seed=42).to_wire()

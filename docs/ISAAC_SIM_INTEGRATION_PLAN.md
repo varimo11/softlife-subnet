@@ -215,6 +215,18 @@ Run the current stage-level bridge inside Isaac Sim:
 This is not yet robot manipulation. It proves the Isaac runtime path,
 stage loading, command execution, optional frame capture, and artifact return.
 
+Run the current multi-seed acceptance gate:
+
+```bash
+python3 integrations/isaac_lab/scripts/validate_isaac_workflow.py \
+  --out-dir /tmp/softlife_isaac_validation \
+  --pretty
+```
+
+On an Isaac workstation, use the same script with Isaac Sim's Python and
+`--real-stage --capture-frames` to verify actual Isaac Sim startup, stage
+loading, simulation updates, artifact writing, and optional frame capture.
+
 ## Controller Swap Point
 
 The Isaac runner now depends on `RobotReplayController` rather than hard-coded
