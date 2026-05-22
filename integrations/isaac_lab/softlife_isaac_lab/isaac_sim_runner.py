@@ -237,10 +237,17 @@ def _capture_viewport_frame(render_dir: Path, index: int, app: Any) -> Path | No
         viewport = viewport_utility.get_active_viewport()
         frame_path = render_dir / f"softlife_replay_{index:04d}.png"
         viewport_utility.capture_viewport_to_file(viewport, str(frame_path))
-        _step_app(app, 3)
-        return frame_path
+        return frame_path if _wait_for_frame_file(frame_path, app) else None
     except Exception:
         return None
+
+
+def _wait_for_frame_file(frame_path: Path, app: Any, *, attempts: int = 20) -> bool:
+    for _ in range(max(1, attempts)):
+        _step_app(app, 1)
+        if frame_path.exists() and frame_path.stat().st_size > 0:
+            return True
+    return False
 
 
 def _scene_path_context(bundle_payload: Mapping[str, Any], scene_path: str | Path | None) -> Any:

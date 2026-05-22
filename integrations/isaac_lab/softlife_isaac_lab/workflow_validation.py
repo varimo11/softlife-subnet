@@ -41,6 +41,7 @@ class ArtifactWorkflowCheck:
     step_count: int | None = None
     command_log_count: int | None = None
     rendered_frame_count: int = 0
+    rendered_frame_paths: tuple[Path, ...] = ()
     error: str | None = None
 
     def to_wire(self) -> dict[str, object]:
@@ -57,6 +58,7 @@ class ArtifactWorkflowCheck:
             "step_count": self.step_count,
             "command_log_count": self.command_log_count,
             "rendered_frame_count": self.rendered_frame_count,
+            "rendered_frame_paths": [str(path) for path in self.rendered_frame_paths],
             "error": self.error,
         }
 
@@ -246,13 +248,13 @@ def _validate_stage_artifact(
                 config=SoftLifeIsaacRunConfig(headless=headless),
             )
             artifact = result.artifact
-            rendered_frame_count = len(result.rendered_frames)
+            rendered_frames = tuple(result.rendered_frames)
         else:
             artifact = build_stage_level_artifact(
                 bundle_payload,
                 frame_steps_per_command=sim_steps,
             )
-            rendered_frame_count = 0
+            rendered_frames = ()
         _write_artifact(artifact_path, artifact)
         return _check_artifact(
             name="stage",
@@ -262,7 +264,8 @@ def _validate_stage_artifact(
             artifact=artifact,
             artifact_path=artifact_path,
             command_count=command_count,
-            rendered_frame_count=rendered_frame_count,
+            rendered_frames=rendered_frames,
+            require_rendered_frames=real_stage and capture_frames,
         )
     except Exception as exc:
         return ArtifactWorkflowCheck(
@@ -316,16 +319,19 @@ def _check_artifact(
     artifact: PhysicsReplayArtifact,
     artifact_path: Path,
     command_count: int,
-    rendered_frame_count: int = 0,
+    rendered_frames: tuple[Path, ...] = (),
+    require_rendered_frames: bool = False,
 ) -> ArtifactWorkflowCheck:
     score = _score_artifact(seed, bundle_payload, artifact)
     command_log_count = len(artifact.command_log)
     round_trip = PhysicsReplayArtifact.from_wire(artifact.to_private_wire())
+    rendered_frame_error = _rendered_frame_error(rendered_frames, require_rendered_frames)
     ok = (
         round_trip == artifact
         and artifact.action_count == command_count
         and artifact.invalid_actions == 0
         and command_log_count == command_count
+        and rendered_frame_error is None
     )
     return ArtifactWorkflowCheck(
         name=name,
@@ -339,7 +345,9 @@ def _check_artifact(
         action_count=artifact.action_count,
         step_count=artifact.step_count,
         command_log_count=command_log_count,
-        rendered_frame_count=rendered_frame_count,
+        rendered_frame_count=len(rendered_frames),
+        rendered_frame_paths=rendered_frames,
+        error=rendered_frame_error,
     )
 
 
@@ -356,6 +364,24 @@ def _score_artifact(
         artifact=artifact,
     )
     return RoomReadinessScorer().score(replay_result).readiness
+
+
+def _rendered_frame_error(
+    rendered_frames: tuple[Path, ...],
+    require_rendered_frames: bool,
+) -> str | None:
+    if not require_rendered_frames:
+        return None
+    if not rendered_frames:
+        return "frame capture requested but no rendered frames were returned"
+    missing_or_empty = tuple(
+        path for path in rendered_frames
+        if not path.exists() or path.stat().st_size <= 0
+    )
+    if missing_or_empty:
+        paths = ", ".join(str(path) for path in missing_or_empty)
+        return f"frame capture returned missing or empty files: {paths}"
+    return None
 
 
 def _write_artifact(path: Path, artifact: PhysicsReplayArtifact) -> Path:

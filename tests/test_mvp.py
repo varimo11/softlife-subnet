@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import unittest
+from types import SimpleNamespace
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from integrations.isaac_lab.softlife_isaac_lab.replay_runner import (
     IsaacLabNotAvailable,
@@ -415,6 +417,33 @@ class MvpTests(unittest.TestCase):
                 self.assertEqual(result.unitree_dry_run.invalid_actions, 0)
                 self.assertGreater(result.stage.readiness or 0.0, 0.0)
                 self.assertGreater(result.unitree_dry_run.readiness or 0.0, 0.0)
+
+    def test_isaac_workflow_validation_requires_frames_when_requested(self) -> None:
+        def fake_real_stage(bundle_payload: dict[str, object], **_: object) -> object:
+            return SimpleNamespace(
+                artifact=build_stage_level_artifact(bundle_payload),
+                rendered_frames=(),
+            )
+
+        with TemporaryDirectory() as tmpdir:
+            with patch(
+                "integrations.isaac_lab.softlife_isaac_lab.workflow_validation."
+                "run_isaac_sim_stage_replay",
+                fake_real_stage,
+            ):
+                report = validate_isaac_workflow(
+                    out_dir=tmpdir,
+                    seeds=(42,),
+                    real_stage=True,
+                    capture_frames=True,
+                )
+
+        result = report.results[0]
+        self.assertFalse(report.ok)
+        self.assertFalse(result.stage.ok)
+        self.assertTrue(result.unitree_dry_run.ok)
+        self.assertEqual(result.stage.rendered_frame_count, 0)
+        self.assertIn("no rendered frames", result.stage.error or "")
 
     def test_unitree_controller_fails_clearly_without_backend(self) -> None:
         bundle = build_isaac_replay_bundle(seed=42).to_wire()

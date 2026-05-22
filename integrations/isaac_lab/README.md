@@ -116,6 +116,9 @@ For a multi-seed workstation gate:
   --pretty
 ```
 
+When `--capture-frames` is set, the gate fails if Isaac does not return at
+least one existing non-empty frame file for each real-stage replay.
+
 The replacement point is `RobotReplayController`. A future
 `UnitreeIsaacReplayController` now implements the same `execute(...)` and
 `to_artifact(...)` methods. It delegates actual robot work to a

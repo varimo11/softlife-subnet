@@ -228,7 +228,7 @@ python3 integrations/isaac_lab/scripts/validate_isaac_workflow.py \
 
 On an Isaac workstation, use the same script with Isaac Sim's Python and
 `--real-stage --capture-frames` to verify actual Isaac Sim startup, stage
-loading, simulation updates, artifact writing, and optional frame capture.
+loading, simulation updates, artifact writing, and non-empty frame capture.
 
 ## Controller Swap Point
 
