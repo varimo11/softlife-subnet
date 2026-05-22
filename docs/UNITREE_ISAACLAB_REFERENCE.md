@@ -151,8 +151,8 @@ without breaking the current mock physics demo.
 
 ## Suggested Next Milestones
 
-1. Run `validate_isaac_workflow.py --real-stage --capture-frames` on an Isaac workstation.
-2. Run `run_unitree_isaac_replay.py --stage-backend` with Isaac Sim's Python.
+1. Run `validate_isaac_workflow.py --real-stage --unitree-stage-backend --capture-frames` on an Isaac workstation.
+2. Run `run_unitree_isaac_replay.py --stage-backend` with Isaac Sim's Python for single-bundle debugging.
 3. Implement an articulated Isaac/Unitree backend behind `UnitreeIsaacBackend`.
 4. Render one successful Unitree-controlled Isaac replay from a fixed validator camera.
 5. Feed Unitree/Isaac physics truth back into the existing `ReplayResult`.

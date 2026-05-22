@@ -78,7 +78,8 @@ controller/artifact boundary, but it does not run Isaac physics.
 
 `validate_isaac_workflow.py` is the local acceptance gate. It writes replay
 bundles, USDA scenes, stage artifacts, Unitree dry-run artifacts, and a workflow
-report for the canonical seeds.
+report for the canonical seeds. On an Isaac workstation, it can also run the
+stage replay and Unitree USD stage-backed backend in the same report.
 
 ## Run The Stage-Level Isaac Sim Replay
 
@@ -114,12 +115,13 @@ For a multi-seed workstation gate:
 ./python.sh /path/to/softlife-subnet-demo/integrations/isaac_lab/scripts/validate_isaac_workflow.py \
   --out-dir /tmp/softlife_isaac_validation \
   --real-stage \
+  --unitree-stage-backend \
   --capture-frames \
   --pretty
 ```
 
 When `--capture-frames` is set, the gate fails if Isaac does not return at
-least one existing non-empty frame file for each real-stage replay.
+least one existing non-empty frame file for each requested Isaac-backed replay.
 
 The replacement point is `RobotReplayController`. A future
 `UnitreeIsaacReplayController` now implements the same `execute(...)` and

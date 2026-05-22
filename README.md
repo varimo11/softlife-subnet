@@ -84,8 +84,9 @@ On an Isaac Sim workstation, run `run_isaac_stage_replay.py` with Isaac Sim's
 Python instead of `--dry-run` to load the scene, apply compiled commands on the
 USD stage, read final prim transforms and surface dirt back from the stage,
 optionally capture viewport frames, and write the validator artifact.
-Use `validate_isaac_workflow.py --real-stage` as the acceptance gate for the
-same bundle/scene/artifact/scoring flow under Isaac Sim. With
+Use `validate_isaac_workflow.py --real-stage --unitree-stage-backend` as the
+acceptance gate for the same bundle/scene/artifact/scoring flow under Isaac
+Sim, including the Unitree controller's USD stage-backed backend. With
 `--capture-frames`, the gate also requires non-empty frame files.
 
 The Unitree controller path has a local dry-run backend for validating command

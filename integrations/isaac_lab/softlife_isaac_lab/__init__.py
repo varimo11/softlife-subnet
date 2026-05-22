@@ -32,6 +32,10 @@ from integrations.isaac_lab.softlife_isaac_lab.unitree_controller import (
     UnitreeIsaacReplayController,
     build_unitree_dry_run_artifact,
 )
+from integrations.isaac_lab.softlife_isaac_lab.unitree_stage_runner import (
+    UnitreeStageReplayResult,
+    run_unitree_stage_backend_replay,
+)
 from integrations.isaac_lab.softlife_isaac_lab.workflow_validation import (
     CANONICAL_WORKFLOW_SEEDS,
     ArtifactWorkflowCheck,
@@ -55,6 +59,7 @@ __all__ = [
     "UnitreeIsaacBackend",
     "UnitreeIsaacControllerUnavailable",
     "UnitreeIsaacReplayController",
+    "UnitreeStageReplayResult",
     "build_stage_level_artifact",
     "build_stage_truth_artifact",
     "build_unitree_dry_run_artifact",
@@ -62,6 +67,7 @@ __all__ = [
     "find_isaac_sim_package",
     "run_isaac_sim_stage_replay",
     "run_replay_bundle",
+    "run_unitree_stage_backend_replay",
     "ArtifactWorkflowCheck",
     "CANONICAL_WORKFLOW_SEEDS",
     "IsaacWorkflowReport",

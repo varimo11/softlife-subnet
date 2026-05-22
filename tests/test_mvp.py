@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -31,6 +32,10 @@ from integrations.isaac_lab.softlife_isaac_lab.unitree_controller import (
     UnitreeIsaacBackend,
     UnitreeIsaacControllerUnavailable,
     UnitreeIsaacReplayController,
+    build_unitree_dry_run_artifact,
+)
+from integrations.isaac_lab.softlife_isaac_lab.unitree_stage_runner import (
+    UnitreeStageReplayResult,
 )
 from integrations.isaac_lab.softlife_isaac_lab.usd_export import render_usda_scene
 from integrations.isaac_lab.softlife_isaac_lab.workflow_validation import (
@@ -507,6 +512,84 @@ class MvpTests(unittest.TestCase):
         self.assertTrue(result.unitree_dry_run.ok)
         self.assertEqual(result.stage.rendered_frame_count, 0)
         self.assertIn("no rendered frames", result.stage.error or "")
+
+    def test_isaac_workflow_validation_can_include_unitree_stage_backend(self) -> None:
+        def fake_unitree_stage(
+            bundle_payload: dict[str, object],
+            *,
+            scene_path: object,
+            render_dir: object,
+            sim_steps: int,
+            headless: bool,
+        ) -> UnitreeStageReplayResult:
+            del headless
+            artifact = build_unitree_dry_run_artifact(
+                bundle_payload,
+                adapter_name="unitree_isaac_stage_backend_v1",
+                frame_steps_per_command=sim_steps,
+            )
+            frame_paths: tuple[Path, ...] = ()
+            if render_dir is not None:
+                frame_dir = Path(render_dir)
+                frame_dir.mkdir(parents=True, exist_ok=True)
+                frame_path = frame_dir / "frame_0000.png"
+                frame_path.write_bytes(b"frame")
+                frame_paths = (frame_path,)
+            return UnitreeStageReplayResult(
+                artifact=artifact,
+                scene_path=Path(scene_path),
+                rendered_frames=frame_paths,
+            )
+
+        with TemporaryDirectory() as tmpdir:
+            with patch(
+                "integrations.isaac_lab.softlife_isaac_lab.workflow_validation."
+                "run_unitree_stage_backend_replay",
+                fake_unitree_stage,
+            ):
+                report = validate_isaac_workflow(
+                    out_dir=tmpdir,
+                    seeds=(42,),
+                    unitree_stage_backend=True,
+                    capture_frames=True,
+                )
+
+            result = report.results[0]
+            self.assertTrue(report.ok)
+            self.assertTrue(report.unitree_stage_backend_requested)
+            self.assertIsNotNone(result.unitree_stage_backend)
+            assert result.unitree_stage_backend is not None
+            self.assertTrue(result.unitree_stage_backend.ok)
+            self.assertEqual(
+                result.unitree_stage_backend.adapter_name,
+                "unitree_isaac_stage_backend_v1",
+            )
+            self.assertEqual(result.unitree_stage_backend.command_log_count, result.command_count)
+            self.assertEqual(result.unitree_stage_backend.rendered_frame_count, 1)
+            self.assertTrue(result.unitree_stage_backend.rendered_frame_paths[0].exists())
+
+    def test_isaac_workflow_validation_reports_unitree_stage_backend_unavailable(self) -> None:
+        if find_isaac_sim_package() is not None:
+            self.skipTest("Isaac Sim is installed; stage backend execution requires local GPU setup.")
+
+        with TemporaryDirectory() as tmpdir:
+            report = validate_isaac_workflow(
+                out_dir=tmpdir,
+                seeds=(42,),
+                unitree_stage_backend=True,
+            )
+
+        result = report.results[0]
+        self.assertFalse(report.ok)
+        self.assertIsNotNone(result.unitree_stage_backend)
+        assert result.unitree_stage_backend is not None
+        self.assertFalse(result.unitree_stage_backend.ok)
+        self.assertTrue(result.stage.ok)
+        self.assertTrue(result.unitree_dry_run.ok)
+        self.assertIn(
+            "UnitreeIsaacControllerUnavailable",
+            result.unitree_stage_backend.error or "",
+        )
 
     def test_unitree_controller_fails_clearly_without_backend(self) -> None:
         bundle = build_isaac_replay_bundle(seed=42).to_wire()

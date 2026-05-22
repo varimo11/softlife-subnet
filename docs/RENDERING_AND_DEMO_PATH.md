@@ -109,7 +109,7 @@ Hidden validator mode must not show:
 
 After the current alignment work, the next credible milestones are:
 
-1. Run `validate_isaac_workflow.py --real-stage --capture-frames` on an Isaac workstation.
+1. Run `validate_isaac_workflow.py --real-stage --unitree-stage-backend --capture-frames` on an Isaac workstation.
 2. Replace stage-level object motion with a real Unitree/Isaac controller.
 3. Replace bootstrap cubes with real USD hotel-room and object assets.
 4. Load one hotel-room USD scene with a Unitree-compatible robot.

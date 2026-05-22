@@ -39,14 +39,22 @@ def main() -> None:
         help="Launch Isaac Sim for the stage replay instead of using the dry-run stage model.",
     )
     parser.add_argument(
+        "--unitree-stage-backend",
+        action="store_true",
+        help=(
+            "Also run the Unitree controller through the Isaac USD stage-backed "
+            "backend. Requires Isaac Sim."
+        ),
+    )
+    parser.add_argument(
         "--capture-frames",
         action="store_true",
-        help="Capture viewport frames during --real-stage execution.",
+        help="Capture viewport frames during real Isaac-backed execution.",
     )
     parser.add_argument(
         "--show",
         action="store_true",
-        help="Run Isaac Sim with a visible window during --real-stage execution.",
+        help="Run Isaac Sim with a visible window during Isaac-backed execution.",
     )
     parser.add_argument("--sim-steps", type=int, default=12, help="Dry-run sim steps per command.")
     parser.add_argument("--pretty", action="store_true", help="Pretty-print the report JSON.")
@@ -57,6 +65,7 @@ def main() -> None:
         out_dir=args.out_dir,
         seeds=seeds,
         real_stage=args.real_stage,
+        unitree_stage_backend=args.unitree_stage_backend,
         capture_frames=args.capture_frames,
         headless=not args.show,
         sim_steps=args.sim_steps,

@@ -11,21 +11,13 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from integrations.isaac_lab.softlife_isaac_lab.isaac_sim_runner import (  # noqa: E402
-    _capture_viewport_frame,
-    _compiled_commands,
-    _create_simulation_app,
-    _current_stage,
-    _open_stage,
-    _scene_path_context,
-    _step_app,
-    find_isaac_sim_package,
-)
 from integrations.isaac_lab.softlife_isaac_lab.unitree_controller import (  # noqa: E402
-    StageBackedUnitreeBackend,
     UnitreeIsaacControllerUnavailable,
     UnitreeIsaacReplayController,
     build_unitree_dry_run_artifact,
+)
+from integrations.isaac_lab.softlife_isaac_lab.unitree_stage_runner import (  # noqa: E402
+    run_unitree_stage_backend_replay,
 )
 from integrations.isaac_lab.softlife_isaac_lab.usd_export import load_bundle_payload  # noqa: E402
 
@@ -74,13 +66,16 @@ def main() -> None:
         scene_path: Path | None = None
     elif args.stage_backend:
         try:
-            artifact, scene_path, rendered_frames = _run_stage_backed_replay(
-                bundle_payload=bundle_payload,
+            result = run_unitree_stage_backend_replay(
+                bundle_payload,
                 scene_path=args.scene or str(_default_scene_path(args.out_artifact)),
                 render_dir=args.render_dir,
                 sim_steps=args.sim_steps,
                 headless=not args.show,
             )
+            artifact = result.artifact
+            scene_path = result.scene_path
+            rendered_frames = result.rendered_frames
         except UnitreeIsaacControllerUnavailable as exc:
             print(f"Unitree/Isaac stage backend unavailable: {exc}", file=sys.stderr)
             raise SystemExit(2) from exc
@@ -113,57 +108,6 @@ def main() -> None:
         print(f"Stage backend scene path: {scene_path}")
         print(f"Captured frames: {len(rendered_frames)}")
     print(f"Artifact hash: {artifact.artifact_hash}")
-
-
-def _run_stage_backed_replay(
-    *,
-    bundle_payload: object,
-    scene_path: str | None,
-    render_dir: str | None,
-    sim_steps: int,
-    headless: bool,
-) -> tuple[object, Path, tuple[Path, ...]]:
-    isaac_package = find_isaac_sim_package()
-    if isaac_package is None:
-        raise UnitreeIsaacControllerUnavailable(
-            "Isaac Sim is not installed in this Python environment. "
-            "Run --stage-backend from an Isaac Sim workstation, for example "
-            "with Isaac Sim's python.sh."
-        )
-
-    rendered_frames: list[Path] = []
-    with _scene_path_context(bundle_payload, scene_path) as resolved_scene_path:
-        app = _create_simulation_app(isaac_package, headless=headless)
-        try:
-            _open_stage(resolved_scene_path)
-            stage = _current_stage()
-            backend = StageBackedUnitreeBackend.from_bundle(
-                bundle_payload,
-                stage=stage,
-            )
-            controller = UnitreeIsaacReplayController.from_bundle(
-                bundle_payload,
-                backend=backend,
-            )
-            commands = _compiled_commands(bundle_payload)
-            frame_dir = None if render_dir is None else Path(render_dir)
-            if frame_dir is not None:
-                frame_dir.mkdir(parents=True, exist_ok=True)
-            for index, command in enumerate(commands):
-                controller.execute(command, sim_steps=sim_steps)
-                _step_app(app, sim_steps)
-                if frame_dir is not None:
-                    frame = _capture_viewport_frame(frame_dir, index, app)
-                    if frame is not None:
-                        rendered_frames.append(frame)
-            artifact = controller.to_artifact(
-                adapter_name="unitree_isaac_stage_backend_v1",
-                action_count=len(commands),
-                step_count=len(commands) * sim_steps,
-            )
-            return artifact, resolved_scene_path, tuple(rendered_frames)
-        finally:
-            app.close()
 
 
 def _default_scene_path(output_artifact_path: str) -> Path:

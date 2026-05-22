@@ -14,6 +14,9 @@ from integrations.isaac_lab.softlife_isaac_lab.isaac_sim_runner import (
 from integrations.isaac_lab.softlife_isaac_lab.unitree_controller import (
     build_unitree_dry_run_artifact,
 )
+from integrations.isaac_lab.softlife_isaac_lab.unitree_stage_runner import (
+    run_unitree_stage_backend_replay,
+)
 from integrations.isaac_lab.softlife_isaac_lab.usd_export import write_usda_scene
 from softlife_subnet.actions import Trajectory
 from softlife_subnet.artifact_ingest import replay_result_from_physics_artifact
@@ -74,15 +77,19 @@ class SeedWorkflowResult:
     bundle_redacts_private_seed: bool
     stage: ArtifactWorkflowCheck
     unitree_dry_run: ArtifactWorkflowCheck
+    unitree_stage_backend: ArtifactWorkflowCheck | None = None
 
     @property
     def ok(self) -> bool:
-        return (
+        base_ok = (
             self.bundle_redacts_private_seed
             and self.command_count == self.trajectory_count
             and self.stage.ok
             and self.unitree_dry_run.ok
         )
+        if self.unitree_stage_backend is None:
+            return base_ok
+        return base_ok and self.unitree_stage_backend.ok
 
     def to_wire(self) -> dict[str, object]:
         return {
@@ -96,6 +103,11 @@ class SeedWorkflowResult:
             "bundle_redacts_private_seed": self.bundle_redacts_private_seed,
             "stage": self.stage.to_wire(),
             "unitree_dry_run": self.unitree_dry_run.to_wire(),
+            "unitree_stage_backend": (
+                None
+                if self.unitree_stage_backend is None
+                else self.unitree_stage_backend.to_wire()
+            ),
         }
 
 
@@ -104,6 +116,7 @@ class IsaacWorkflowReport:
     output_dir: Path
     seeds: tuple[int, ...]
     real_stage_requested: bool
+    unitree_stage_backend_requested: bool
     capture_frames: bool
     isaac_sim_package: str | None
     results: tuple[SeedWorkflowResult, ...]
@@ -120,6 +133,7 @@ class IsaacWorkflowReport:
             "output_dir": str(self.output_dir),
             "seeds": list(self.seeds),
             "real_stage_requested": self.real_stage_requested,
+            "unitree_stage_backend_requested": self.unitree_stage_backend_requested,
             "capture_frames": self.capture_frames,
             "isaac_sim_package": self.isaac_sim_package,
             "results": [result.to_wire() for result in self.results],
@@ -131,6 +145,7 @@ def validate_isaac_workflow(
     out_dir: str | Path,
     seeds: Iterable[int] = CANONICAL_WORKFLOW_SEEDS,
     real_stage: bool = False,
+    unitree_stage_backend: bool = False,
     capture_frames: bool = False,
     headless: bool = True,
     sim_steps: int = 12,
@@ -151,6 +166,7 @@ def validate_isaac_workflow(
             seed=seed,
             out_dir=output_dir,
             real_stage=real_stage,
+            unitree_stage_backend=unitree_stage_backend,
             capture_frames=capture_frames,
             headless=headless,
             sim_steps=sim_steps,
@@ -161,6 +177,7 @@ def validate_isaac_workflow(
         output_dir=output_dir,
         seeds=seed_tuple,
         real_stage_requested=real_stage,
+        unitree_stage_backend_requested=unitree_stage_backend,
         capture_frames=capture_frames,
         isaac_sim_package=find_isaac_sim_package(),
         results=results,
@@ -176,6 +193,7 @@ def _validate_seed(
     seed: int,
     out_dir: Path,
     real_stage: bool,
+    unitree_stage_backend: bool,
     capture_frames: bool,
     headless: bool,
     sim_steps: int,
@@ -211,6 +229,20 @@ def _validate_seed(
         sim_steps=sim_steps,
         command_count=command_count,
     )
+    unitree_stage = (
+        _validate_unitree_stage_backend_artifact(
+            seed=seed,
+            bundle_payload=bundle_payload,
+            scene_path=scene_path,
+            artifact_path=seed_dir / f"softlife_seed{seed}_unitree_stage_artifact.json",
+            capture_frames=capture_frames,
+            headless=headless,
+            sim_steps=sim_steps,
+            command_count=command_count,
+        )
+        if unitree_stage_backend
+        else None
+    )
 
     return SeedWorkflowResult(
         seed=seed,
@@ -222,6 +254,7 @@ def _validate_seed(
         bundle_redacts_private_seed="private_seed" not in bundle_json,
         stage=stage,
         unitree_dry_run=unitree_dry_run,
+        unitree_stage_backend=unitree_stage,
     )
 
 
@@ -304,6 +337,51 @@ def _validate_unitree_dry_run_artifact(
         return ArtifactWorkflowCheck(
             name="unitree",
             mode="unitree_dry_run",
+            ok=False,
+            artifact_path=artifact_path,
+            error=f"{type(exc).__name__}: {exc}",
+        )
+
+
+def _validate_unitree_stage_backend_artifact(
+    *,
+    seed: int,
+    bundle_payload: Mapping[str, Any],
+    scene_path: Path,
+    artifact_path: Path,
+    capture_frames: bool,
+    headless: bool,
+    sim_steps: int,
+    command_count: int,
+) -> ArtifactWorkflowCheck:
+    try:
+        result = run_unitree_stage_backend_replay(
+            bundle_payload,
+            scene_path=scene_path,
+            render_dir=artifact_path.parent / "unitree_stage_frames"
+            if capture_frames
+            else None,
+            sim_steps=sim_steps,
+            headless=headless,
+        )
+        artifact = result.artifact
+        rendered_frames = tuple(result.rendered_frames)
+        _write_artifact(artifact_path, artifact)
+        return _check_artifact(
+            name="unitree_stage",
+            mode="unitree_stage_backend",
+            seed=seed,
+            bundle_payload=bundle_payload,
+            artifact=artifact,
+            artifact_path=artifact_path,
+            command_count=command_count,
+            rendered_frames=rendered_frames,
+            require_rendered_frames=capture_frames,
+        )
+    except Exception as exc:
+        return ArtifactWorkflowCheck(
+            name="unitree_stage",
+            mode="unitree_stage_backend",
             ok=False,
             artifact_path=artifact_path,
             error=f"{type(exc).__name__}: {exc}",
