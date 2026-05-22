@@ -135,7 +135,8 @@ Unitree's structure:
 - `softlife_subnet.robotics.HotelRoomSceneManifest`
 - `softlife_subnet.physics_artifacts.PhysicsReplayArtifact`
 - `softlife_subnet.isaac_handoff.IsaacReplayBundle`
-- `softlife_subnet.isaac_adapter.IsaacSimSimulationAdapter`
+- `softlife_subnet.isaac_adapter.IsaacSimSimulationAdapter` with `stage_dry_run`
+  and workstation `stage` modes
 - `integrations.isaac_lab.softlife_isaac_lab.controllers.RobotReplayController`
 - `integrations.isaac_lab.softlife_isaac_lab.unitree_controller.UnitreeIsaacReplayController`
 - `integrations.isaac_lab.softlife_isaac_lab.unitree_controller.UnitreeIsaacBackend`

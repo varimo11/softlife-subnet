@@ -170,6 +170,33 @@ class MvpTests(unittest.TestCase):
         with self.assertRaises(IsaacSimUnavailableError):
             adapter.replay(room, trajectory)
 
+    def test_isaac_adapter_stage_dry_run_returns_replay_result(self) -> None:
+        room = RoomGenerator().generate(42)
+        trajectory = HeuristicMiner().solve(room.to_public())
+        adapter = IsaacSimSimulationAdapter(runtime_mode="stage_dry_run")
+
+        replay = adapter.replay(room, trajectory)
+        score = RoomReadinessScorer().score(replay)
+
+        self.assertIsInstance(adapter, SimulationAdapter)
+        self.assertIsInstance(replay, ReplayResult)
+        self.assertIsNotNone(replay.physics_artifact)
+        self.assertEqual(replay.adapter_name, "isaac_sim_stage_replay_v1")
+        self.assertEqual(replay.action_count, len(trajectory))
+        self.assertEqual(replay.invalid_actions, 0)
+        self.assertEqual(replay.replay_hash, replay.physics_artifact.artifact_hash)
+        self.assertEqual(score.readiness, 97.679)
+
+    def test_isaac_adapter_stage_mode_fails_clearly_without_runtime(self) -> None:
+        if find_isaac_sim_package() is not None:
+            self.skipTest("Isaac Sim is installed; stage adapter requires local GPU setup.")
+        room = RoomGenerator().generate(42)
+        trajectory = HeuristicMiner().solve(room.to_public())
+        adapter = IsaacSimSimulationAdapter(runtime_mode="stage")
+
+        with self.assertRaises(IsaacSimUnavailableError):
+            adapter.replay(room, trajectory)
+
     def test_physics_artifact_schema_is_deterministic_and_redacts_public_summary(self) -> None:
         room = RoomGenerator().generate(42)
         trajectory = HeuristicMiner().solve(room.to_public())

@@ -39,18 +39,32 @@ Current Isaac-aligned scaffolding:
   available.
 - `score_physics_artifact.py`: ingestion path from Isaac physics truth back into
   the validator scorer.
-- `IsaacSimSimulationAdapter`: optional backend boundary that currently raises a
-  clear dependency error instead of importing Isaac Lab in the lightweight MVP.
+- `IsaacSimSimulationAdapter`: validator-facing adapter bridge with local
+  `stage_dry_run` and Isaac workstation `stage` modes.
 
-Future adapter implementation:
+Current adapter implementation:
 
 - `IsaacSimSimulationAdapter`
+- Compiles symbolic actions into robot commands.
+- Returns a `ReplayResult` from `softlife.physics_replay.v1` in `stage_dry_run`.
+- Lazily calls the Isaac stage runner in `stage` mode.
+- Still avoids importing Isaac Lab in lightweight module import paths.
+
+Future articulated implementation:
+
 - Loads or generates a hidden USD scene from validator state.
 - Compiles symbolic actions into robot commands.
 - Runs physics replay.
 - Produces replay events, final object poses, collision/damage metrics, cleanliness state, and a deterministic replay hash.
 
 Miner code should not change when the adapter switches from mock physics to Isaac Sim.
+
+Validator-side usage:
+
+```python
+IsaacSimSimulationAdapter(runtime_mode="stage_dry_run").replay(environment_state, trajectory)
+IsaacSimSimulationAdapter(runtime_mode="stage").replay(environment_state, trajectory)
+```
 
 ## Mapping Symbolic Room State To USD Assets
 

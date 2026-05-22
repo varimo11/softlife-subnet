@@ -13,7 +13,7 @@ This is not a hotel management app. It is a lightweight evaluation market for em
 - `softlife_subnet.actions`: wire-friendly `Action` and `Trajectory` primitives.
 - `softlife_subnet.simulation`: `SimulationAdapter`, `MockSimulationAdapter`, and `ReplayResult`.
 - `softlife_subnet.robotics`: Unitree/Isaac-style action provider, command compiler, and scene manifest bridge.
-- `softlife_subnet.isaac_adapter`: optional Isaac Lab adapter stub kept outside the mock backend.
+- `softlife_subnet.isaac_adapter`: optional Isaac adapter bridge with local stage dry-run and Isaac workstation modes.
 - `softlife_subnet.physics_artifacts`: validator-private physics truth schema for Isaac/hardware replay.
 - `softlife_subnet.isaac_handoff`: deterministic Isaac replay bundle exporter.
 - `softlife_subnet.scoring`: room readiness scoring.
@@ -101,6 +101,15 @@ Plain non-dry-run execution still requires the future articulated
 `UnitreeIsaacBackend`, where Isaac Lab robot/env handles and Unitree
 gripper/control APIs plug in.
 
+Validator-side code can also use the adapter boundary directly:
+
+```python
+adapter = IsaacSimSimulationAdapter(runtime_mode="stage_dry_run")
+replay = adapter.replay(environment_state, trajectory)
+```
+
+Use `runtime_mode="stage"` only from an Isaac Sim workstation.
+
 ## Docs
 
 - `docs/THREAT_MODEL.md`: overfitting, invalid action spam, unsafe policies, scoring loopholes, seed leaks, validator manipulation, and replay nondeterminism.
@@ -112,7 +121,7 @@ gripper/control APIs plug in.
 
 ## Extension Points
 
-- Implement `IsaacSimSimulationAdapter` behind the existing `SimulationAdapter` protocol.
+- Run `IsaacSimSimulationAdapter(runtime_mode="stage")` on an Isaac workstation.
 - Feed `SoftLifeTrajectoryProvider` commands into an Isaac Lab control loop.
 - Convert Isaac final physics truth into `PhysicsReplayArtifact` and then `ReplayResult`.
 - Replace `Validator` storage/evaluation with a Bittensor validator process.
