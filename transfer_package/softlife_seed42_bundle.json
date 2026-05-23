@@ -1,0 +1,701 @@
+{
+  "bundle_schema": "softlife.isaac_replay_bundle.v1",
+  "challenge_id": "room_1cf6ab0be52f",
+  "compiled_commands": [
+    {
+      "action_index": 0,
+      "command_type": "approach_object",
+      "object_id": "pillow_1",
+      "parameters": {},
+      "source_action_type": "move_to_object",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/pillow_1",
+      "zone": null
+    },
+    {
+      "action_index": 1,
+      "command_type": "grasp_object",
+      "object_id": "pillow_1",
+      "parameters": {},
+      "source_action_type": "pick",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/pillow_1",
+      "zone": null
+    },
+    {
+      "action_index": 2,
+      "command_type": "navigate_to_frame",
+      "object_id": null,
+      "parameters": {},
+      "source_action_type": "move_to_zone",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/bed/target_frame",
+      "zone": "bed"
+    },
+    {
+      "action_index": 3,
+      "command_type": "release_object",
+      "object_id": "pillow_1",
+      "parameters": {},
+      "source_action_type": "place",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/bed/target_frame",
+      "zone": "bed"
+    },
+    {
+      "action_index": 4,
+      "command_type": "approach_object",
+      "object_id": "pillow_2",
+      "parameters": {},
+      "source_action_type": "move_to_object",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/pillow_2",
+      "zone": null
+    },
+    {
+      "action_index": 5,
+      "command_type": "grasp_object",
+      "object_id": "pillow_2",
+      "parameters": {},
+      "source_action_type": "pick",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/pillow_2",
+      "zone": null
+    },
+    {
+      "action_index": 6,
+      "command_type": "navigate_to_frame",
+      "object_id": null,
+      "parameters": {},
+      "source_action_type": "move_to_zone",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/bed/target_frame",
+      "zone": "bed"
+    },
+    {
+      "action_index": 7,
+      "command_type": "release_object",
+      "object_id": "pillow_2",
+      "parameters": {},
+      "source_action_type": "place",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/bed/target_frame",
+      "zone": "bed"
+    },
+    {
+      "action_index": 8,
+      "command_type": "approach_object",
+      "object_id": "shoes_1",
+      "parameters": {},
+      "source_action_type": "move_to_object",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/shoes_1",
+      "zone": null
+    },
+    {
+      "action_index": 9,
+      "command_type": "grasp_object",
+      "object_id": "shoes_1",
+      "parameters": {},
+      "source_action_type": "pick",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/shoes_1",
+      "zone": null
+    },
+    {
+      "action_index": 10,
+      "command_type": "navigate_to_frame",
+      "object_id": null,
+      "parameters": {},
+      "source_action_type": "move_to_zone",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/closet/target_frame",
+      "zone": "closet"
+    },
+    {
+      "action_index": 11,
+      "command_type": "release_object",
+      "object_id": "shoes_1",
+      "parameters": {},
+      "source_action_type": "place",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/closet/target_frame",
+      "zone": "closet"
+    },
+    {
+      "action_index": 12,
+      "command_type": "approach_object",
+      "object_id": "towel_1",
+      "parameters": {},
+      "source_action_type": "move_to_object",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/towel_1",
+      "zone": null
+    },
+    {
+      "action_index": 13,
+      "command_type": "grasp_object",
+      "object_id": "towel_1",
+      "parameters": {},
+      "source_action_type": "pick",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/towel_1",
+      "zone": null
+    },
+    {
+      "action_index": 14,
+      "command_type": "navigate_to_frame",
+      "object_id": null,
+      "parameters": {},
+      "source_action_type": "move_to_zone",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/hamper/target_frame",
+      "zone": "hamper"
+    },
+    {
+      "action_index": 15,
+      "command_type": "release_object",
+      "object_id": "towel_1",
+      "parameters": {},
+      "source_action_type": "place",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/hamper/target_frame",
+      "zone": "hamper"
+    },
+    {
+      "action_index": 16,
+      "command_type": "approach_object",
+      "object_id": "remote_1",
+      "parameters": {},
+      "source_action_type": "move_to_object",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/remote_1",
+      "zone": null
+    },
+    {
+      "action_index": 17,
+      "command_type": "grasp_object",
+      "object_id": "remote_1",
+      "parameters": {},
+      "source_action_type": "pick",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/remote_1",
+      "zone": null
+    },
+    {
+      "action_index": 18,
+      "command_type": "navigate_to_frame",
+      "object_id": null,
+      "parameters": {},
+      "source_action_type": "move_to_zone",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/nightstand/target_frame",
+      "zone": "nightstand"
+    },
+    {
+      "action_index": 19,
+      "command_type": "release_object",
+      "object_id": "remote_1",
+      "parameters": {},
+      "source_action_type": "place",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/nightstand/target_frame",
+      "zone": "nightstand"
+    },
+    {
+      "action_index": 20,
+      "command_type": "approach_object",
+      "object_id": "wrapper_1",
+      "parameters": {},
+      "source_action_type": "move_to_object",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/wrapper_1",
+      "zone": null
+    },
+    {
+      "action_index": 21,
+      "command_type": "grasp_object",
+      "object_id": "wrapper_1",
+      "parameters": {},
+      "source_action_type": "pick",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/wrapper_1",
+      "zone": null
+    },
+    {
+      "action_index": 22,
+      "command_type": "navigate_to_frame",
+      "object_id": null,
+      "parameters": {},
+      "source_action_type": "move_to_zone",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/trash_bin/target_frame",
+      "zone": "trash_bin"
+    },
+    {
+      "action_index": 23,
+      "command_type": "drop_in_receptacle",
+      "object_id": "wrapper_1",
+      "parameters": {},
+      "source_action_type": "dispose",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/trash_bin/target_frame",
+      "zone": "trash_bin"
+    },
+    {
+      "action_index": 24,
+      "command_type": "navigate_to_frame",
+      "object_id": null,
+      "parameters": {},
+      "source_action_type": "move_to_zone",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/bed/target_frame",
+      "zone": "bed"
+    },
+    {
+      "action_index": 25,
+      "command_type": "wipe_surface",
+      "object_id": null,
+      "parameters": {
+        "cleaning_passes": 1
+      },
+      "source_action_type": "clean_surface",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Surfaces/bed",
+      "zone": "bed"
+    },
+    {
+      "action_index": 26,
+      "command_type": "navigate_to_frame",
+      "object_id": null,
+      "parameters": {},
+      "source_action_type": "move_to_zone",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/bathroom_counter/target_frame",
+      "zone": "bathroom_counter"
+    },
+    {
+      "action_index": 27,
+      "command_type": "wipe_surface",
+      "object_id": null,
+      "parameters": {
+        "cleaning_passes": 1
+      },
+      "source_action_type": "clean_surface",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Surfaces/bathroom_counter",
+      "zone": "bathroom_counter"
+    },
+    {
+      "action_index": 28,
+      "command_type": "navigate_to_frame",
+      "object_id": null,
+      "parameters": {},
+      "source_action_type": "move_to_zone",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/desk/target_frame",
+      "zone": "desk"
+    },
+    {
+      "action_index": 29,
+      "command_type": "wipe_surface",
+      "object_id": null,
+      "parameters": {
+        "cleaning_passes": 1
+      },
+      "source_action_type": "clean_surface",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Surfaces/desk",
+      "zone": "desk"
+    },
+    {
+      "action_index": 30,
+      "command_type": "navigate_to_frame",
+      "object_id": null,
+      "parameters": {},
+      "source_action_type": "move_to_zone",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/floor/target_frame",
+      "zone": "floor"
+    },
+    {
+      "action_index": 31,
+      "command_type": "wipe_surface",
+      "object_id": null,
+      "parameters": {
+        "cleaning_passes": 1
+      },
+      "source_action_type": "clean_surface",
+      "target_frame": "/World/SoftLifeRooms/room_1cf6ab0be52f/Surfaces/floor",
+      "zone": "floor"
+    }
+  ],
+  "expected_replay_artifact_schema": "softlife.physics_replay.v1",
+  "miner_id": "heuristic_baseline",
+  "public_state": {
+    "objects": [
+      {
+        "kind": "towel",
+        "location": "entry",
+        "object_id": "towel_1",
+        "target_zone": "hamper"
+      },
+      {
+        "kind": "pillow",
+        "location": "nightstand",
+        "object_id": "pillow_1",
+        "target_zone": "bed"
+      },
+      {
+        "kind": "pillow",
+        "location": "floor",
+        "object_id": "pillow_2",
+        "target_zone": "bed"
+      },
+      {
+        "kind": "remote",
+        "location": "desk",
+        "object_id": "remote_1",
+        "target_zone": "nightstand"
+      },
+      {
+        "kind": "shoes",
+        "location": "trash_bin",
+        "object_id": "shoes_1",
+        "target_zone": "closet"
+      },
+      {
+        "kind": "trash",
+        "location": "entry",
+        "object_id": "wrapper_1",
+        "target_zone": "trash_bin"
+      },
+      {
+        "kind": "toiletry",
+        "location": "bathroom_counter",
+        "object_id": "soap_1",
+        "target_zone": "bathroom_counter"
+      }
+    ],
+    "robot_zone": "entry",
+    "room_id": "room_1cf6ab0be52f",
+    "surfaces": [
+      {
+        "dirt_estimate": 0.25,
+        "zone": "floor"
+      },
+      {
+        "dirt_estimate": 0.5,
+        "zone": "bed"
+      },
+      {
+        "dirt_estimate": 0.25,
+        "zone": "desk"
+      },
+      {
+        "dirt_estimate": 0.25,
+        "zone": "bathroom_counter"
+      }
+    ],
+    "task_name": "restore_hotel_room",
+    "zones": [
+      "entry",
+      "floor",
+      "bed",
+      "nightstand",
+      "desk",
+      "bathroom_counter",
+      "hamper",
+      "closet",
+      "trash_bin"
+    ]
+  },
+  "scene_manifest": {
+    "camera_prims": {
+      "overhead_audit_camera": "/World/SoftLifeRooms/room_1cf6ab0be52f/Cameras/overhead_audit_camera",
+      "robot_follow_camera": "/World/SoftLifeRooms/room_1cf6ab0be52f/Cameras/robot_follow_camera",
+      "wide_validator_camera": "/World/SoftLifeRooms/room_1cf6ab0be52f/Cameras/wide_validator_camera"
+    },
+    "object_prims": {
+      "mug_1": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/mug_1",
+      "pillow_1": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/pillow_1",
+      "pillow_2": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/pillow_2",
+      "remote_1": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/remote_1",
+      "shoes_1": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/shoes_1",
+      "soap_1": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/soap_1",
+      "towel_1": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/towel_1",
+      "wrapper_1": "/World/SoftLifeRooms/room_1cf6ab0be52f/Objects/wrapper_1"
+    },
+    "room_id": "room_1cf6ab0be52f",
+    "root_prim": "/World/SoftLifeRooms/room_1cf6ab0be52f",
+    "surface_prims": {
+      "bathroom_counter": "/World/SoftLifeRooms/room_1cf6ab0be52f/Surfaces/bathroom_counter",
+      "bed": "/World/SoftLifeRooms/room_1cf6ab0be52f/Surfaces/bed",
+      "desk": "/World/SoftLifeRooms/room_1cf6ab0be52f/Surfaces/desk",
+      "floor": "/World/SoftLifeRooms/room_1cf6ab0be52f/Surfaces/floor",
+      "nightstand": "/World/SoftLifeRooms/room_1cf6ab0be52f/Surfaces/nightstand"
+    },
+    "zone_frames": {
+      "bathroom_counter": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/bathroom_counter/target_frame",
+      "bed": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/bed/target_frame",
+      "closet": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/closet/target_frame",
+      "desk": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/desk/target_frame",
+      "entry": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/entry/target_frame",
+      "floor": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/floor/target_frame",
+      "hamper": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/hamper/target_frame",
+      "nightstand": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/nightstand/target_frame",
+      "trash_bin": "/World/SoftLifeRooms/room_1cf6ab0be52f/Zones/trash_bin/target_frame"
+    }
+  },
+  "seed_included": false,
+  "task_name": "restore_hotel_room",
+  "trajectory": [
+    {
+      "object_id": "pillow_1",
+      "type": "move_to_object",
+      "zone": null
+    },
+    {
+      "object_id": "pillow_1",
+      "type": "pick",
+      "zone": null
+    },
+    {
+      "object_id": null,
+      "type": "move_to_zone",
+      "zone": "bed"
+    },
+    {
+      "object_id": "pillow_1",
+      "type": "place",
+      "zone": "bed"
+    },
+    {
+      "object_id": "pillow_2",
+      "type": "move_to_object",
+      "zone": null
+    },
+    {
+      "object_id": "pillow_2",
+      "type": "pick",
+      "zone": null
+    },
+    {
+      "object_id": null,
+      "type": "move_to_zone",
+      "zone": "bed"
+    },
+    {
+      "object_id": "pillow_2",
+      "type": "place",
+      "zone": "bed"
+    },
+    {
+      "object_id": "shoes_1",
+      "type": "move_to_object",
+      "zone": null
+    },
+    {
+      "object_id": "shoes_1",
+      "type": "pick",
+      "zone": null
+    },
+    {
+      "object_id": null,
+      "type": "move_to_zone",
+      "zone": "closet"
+    },
+    {
+      "object_id": "shoes_1",
+      "type": "place",
+      "zone": "closet"
+    },
+    {
+      "object_id": "towel_1",
+      "type": "move_to_object",
+      "zone": null
+    },
+    {
+      "object_id": "towel_1",
+      "type": "pick",
+      "zone": null
+    },
+    {
+      "object_id": null,
+      "type": "move_to_zone",
+      "zone": "hamper"
+    },
+    {
+      "object_id": "towel_1",
+      "type": "place",
+      "zone": "hamper"
+    },
+    {
+      "object_id": "remote_1",
+      "type": "move_to_object",
+      "zone": null
+    },
+    {
+      "object_id": "remote_1",
+      "type": "pick",
+      "zone": null
+    },
+    {
+      "object_id": null,
+      "type": "move_to_zone",
+      "zone": "nightstand"
+    },
+    {
+      "object_id": "remote_1",
+      "type": "place",
+      "zone": "nightstand"
+    },
+    {
+      "object_id": "wrapper_1",
+      "type": "move_to_object",
+      "zone": null
+    },
+    {
+      "object_id": "wrapper_1",
+      "type": "pick",
+      "zone": null
+    },
+    {
+      "object_id": null,
+      "type": "move_to_zone",
+      "zone": "trash_bin"
+    },
+    {
+      "object_id": "wrapper_1",
+      "type": "dispose",
+      "zone": null
+    },
+    {
+      "object_id": null,
+      "type": "move_to_zone",
+      "zone": "bed"
+    },
+    {
+      "object_id": null,
+      "type": "clean_surface",
+      "zone": "bed"
+    },
+    {
+      "object_id": null,
+      "type": "move_to_zone",
+      "zone": "bathroom_counter"
+    },
+    {
+      "object_id": null,
+      "type": "clean_surface",
+      "zone": "bathroom_counter"
+    },
+    {
+      "object_id": null,
+      "type": "move_to_zone",
+      "zone": "desk"
+    },
+    {
+      "object_id": null,
+      "type": "clean_surface",
+      "zone": "desk"
+    },
+    {
+      "object_id": null,
+      "type": "move_to_zone",
+      "zone": "floor"
+    },
+    {
+      "object_id": null,
+      "type": "clean_surface",
+      "zone": "floor"
+    }
+  ],
+  "validator_private_state": {
+    "hidden_object_count": 1,
+    "hidden_surface_count": 1,
+    "object_count": 8,
+    "objects": [
+      {
+        "kind": "towel",
+        "location": "entry",
+        "object_id": "towel_1",
+        "target_zone": "hamper",
+        "traits": [],
+        "visible_to_miner": true
+      },
+      {
+        "kind": "pillow",
+        "location": "nightstand",
+        "object_id": "pillow_1",
+        "target_zone": "bed",
+        "traits": [],
+        "visible_to_miner": true
+      },
+      {
+        "kind": "pillow",
+        "location": "floor",
+        "object_id": "pillow_2",
+        "target_zone": "bed",
+        "traits": [],
+        "visible_to_miner": true
+      },
+      {
+        "kind": "mug",
+        "location": "desk",
+        "object_id": "mug_1",
+        "target_zone": "desk",
+        "traits": [
+          "fragile"
+        ],
+        "visible_to_miner": false
+      },
+      {
+        "kind": "remote",
+        "location": "desk",
+        "object_id": "remote_1",
+        "target_zone": "nightstand",
+        "traits": [],
+        "visible_to_miner": true
+      },
+      {
+        "kind": "shoes",
+        "location": "trash_bin",
+        "object_id": "shoes_1",
+        "target_zone": "closet",
+        "traits": [],
+        "visible_to_miner": true
+      },
+      {
+        "kind": "trash",
+        "location": "entry",
+        "object_id": "wrapper_1",
+        "target_zone": "trash_bin",
+        "traits": [
+          "disposable"
+        ],
+        "visible_to_miner": true
+      },
+      {
+        "kind": "toiletry",
+        "location": "bathroom_counter",
+        "object_id": "soap_1",
+        "target_zone": "bathroom_counter",
+        "traits": [],
+        "visible_to_miner": true
+      }
+    ],
+    "robot_zone": "entry",
+    "room_id": "room_1cf6ab0be52f",
+    "surface_count": 5,
+    "surfaces": [
+      {
+        "dirt": 0.2923,
+        "traits": [
+          "stubborn_dirt"
+        ],
+        "visible_to_miner": true,
+        "zone": "floor"
+      },
+      {
+        "dirt": 0.4239,
+        "traits": [],
+        "visible_to_miner": true,
+        "zone": "bed"
+      },
+      {
+        "dirt": 0.3316,
+        "traits": [],
+        "visible_to_miner": false,
+        "zone": "nightstand"
+      },
+      {
+        "dirt": 0.2199,
+        "traits": [
+          "stubborn_dirt"
+        ],
+        "visible_to_miner": true,
+        "zone": "desk"
+      },
+      {
+        "dirt": 0.3545,
+        "traits": [],
+        "visible_to_miner": true,
+        "zone": "bathroom_counter"
+      }
+    ],
+    "task_name": "restore_hotel_room",
+    "visible_object_count": 7,
+    "visible_surface_count": 4
+  },
+  "warning": "Validator-private replay bundle. Do not send to miners."
+}
