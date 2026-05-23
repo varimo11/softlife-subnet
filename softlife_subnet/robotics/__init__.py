@@ -11,7 +11,10 @@ from softlife_subnet.robotics.action_provider import (
 )
 from softlife_subnet.robotics.artifact_builder import build_symbolic_physics_artifact
 from softlife_subnet.robotics.commands import CompiledRobotCommand, RobotCommandType
-from softlife_subnet.robotics.scene_mapping import HotelRoomSceneManifest
+from softlife_subnet.robotics.scene_mapping import (
+    VALIDATOR_CAMERA_NAMES,
+    HotelRoomSceneManifest,
+)
 
 __all__ = [
     "ActionProvider",
@@ -19,5 +22,6 @@ __all__ = [
     "HotelRoomSceneManifest",
     "RobotCommandType",
     "SoftLifeTrajectoryProvider",
+    "VALIDATOR_CAMERA_NAMES",
     "build_symbolic_physics_artifact",
 ]

@@ -15,6 +15,7 @@ from integrations.isaac_lab.softlife_isaac_lab.isaac_sim_runner import (
     build_stage_level_artifact,
     find_isaac_sim_package,
     run_isaac_sim_stage_replay,
+    validator_camera_paths,
 )
 from integrations.isaac_lab.softlife_isaac_lab.replay_runner import (
     IsaacLabNotAvailable,
@@ -68,6 +69,7 @@ __all__ = [
     "run_isaac_sim_stage_replay",
     "run_replay_bundle",
     "run_unitree_stage_backend_replay",
+    "validator_camera_paths",
     "ArtifactWorkflowCheck",
     "CANONICAL_WORKFLOW_SEEDS",
     "IsaacWorkflowReport",

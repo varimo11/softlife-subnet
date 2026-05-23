@@ -6,11 +6,11 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 from integrations.isaac_lab.softlife_isaac_lab.config import SoftLifeIsaacRunConfig
 from integrations.isaac_lab.softlife_isaac_lab.controllers import StageReplayController
-from integrations.isaac_lab.softlife_isaac_lab.scene_spec import pose_for_zone
+from integrations.isaac_lab.softlife_isaac_lab.scene_spec import CAMERA_NAMES, pose_for_zone
 from integrations.isaac_lab.softlife_isaac_lab.stage_truth import build_stage_truth_artifact
 from integrations.isaac_lab.softlife_isaac_lab.usd_export import write_usda_scene
 from softlife_subnet.physics_artifacts import PhysicsReplayArtifact
@@ -73,6 +73,7 @@ def run_isaac_sim_stage_replay(
     scene_path: str | Path | None = None,
     output_artifact_path: str | Path | None = None,
     render_dir: str | Path | None = None,
+    camera_names: Iterable[str] | None = None,
     config: SoftLifeIsaacRunConfig | None = None,
 ) -> IsaacStageReplayResult:
     """Run a deterministic stage-level replay inside Isaac Sim.
@@ -104,6 +105,7 @@ def run_isaac_sim_stage_replay(
                 bundle_payload=bundle_payload,
                 frame_steps_per_command=frame_steps_per_command,
                 render_dir=None if render_dir is None else Path(render_dir),
+                camera_names=camera_names,
                 app=app,
             )
             commands = _compiled_commands(bundle_payload)
@@ -133,6 +135,7 @@ def _apply_commands_to_stage(
     bundle_payload: Mapping[str, Any],
     frame_steps_per_command: int,
     render_dir: Path | None,
+    camera_names: Iterable[str] | None,
     app: Any,
 ) -> tuple[Path, ...]:
     rendered_frames: list[Path] = []
@@ -145,9 +148,15 @@ def _apply_commands_to_stage(
         _update_surface_attrs(controller)
         _step_app(app, frame_steps_per_command)
         if render_dir is not None:
-            frame = _capture_viewport_frame(render_dir, index, app)
-            if frame is not None:
-                rendered_frames.append(frame)
+            rendered_frames.extend(
+                _capture_validator_camera_frames(
+                    render_dir,
+                    index,
+                    app,
+                    bundle_payload=bundle_payload,
+                    camera_names=camera_names,
+                )
+            )
     return tuple(rendered_frames)
 
 
@@ -230,16 +239,112 @@ def _app() -> Any:
     return omni.kit.app.get_app()
 
 
-def _capture_viewport_frame(render_dir: Path, index: int, app: Any) -> Path | None:
+def validator_camera_paths(
+    bundle_payload: Mapping[str, Any],
+    *,
+    camera_names: Iterable[str] | None = None,
+) -> dict[str, str]:
+    """Return named validator camera prim paths for a replay bundle."""
+
+    scene_manifest = _mapping(bundle_payload.get("scene_manifest"))
+    raw_camera_prims = scene_manifest.get("camera_prims")
+    if isinstance(raw_camera_prims, Mapping):
+        available = {
+            str(camera_name): str(camera_path)
+            for camera_name, camera_path in raw_camera_prims.items()
+        }
+    else:
+        root_prim = str(scene_manifest["root_prim"])
+        available = {
+            camera_name: f"{root_prim}/Cameras/{camera_name}"
+            for camera_name in CAMERA_NAMES
+        }
+
+    requested = tuple(CAMERA_NAMES if camera_names is None else camera_names)
+    missing = tuple(camera_name for camera_name in requested if camera_name not in available)
+    if missing:
+        raise ValueError(f"unknown validator camera(s): {', '.join(missing)}")
+    return {camera_name: available[camera_name] for camera_name in requested}
+
+
+def _capture_validator_camera_frames(
+    render_dir: Path,
+    index: int,
+    app: Any,
+    *,
+    bundle_payload: Mapping[str, Any],
+    camera_names: Iterable[str] | None = None,
+) -> tuple[Path, ...]:
+    frames: list[Path] = []
+    for camera_name, camera_path in validator_camera_paths(
+        bundle_payload,
+        camera_names=camera_names,
+    ).items():
+        frame = _capture_viewport_frame(
+            render_dir,
+            index,
+            app,
+            camera_name=camera_name,
+            camera_path=camera_path,
+        )
+        if frame is not None:
+            frames.append(frame)
+    return tuple(frames)
+
+
+def _capture_viewport_frame(
+    render_dir: Path,
+    index: int,
+    app: Any,
+    *,
+    camera_name: str | None = None,
+    camera_path: str | None = None,
+) -> Path | None:
     try:
         import omni.kit.viewport.utility as viewport_utility
 
         viewport = viewport_utility.get_active_viewport()
-        frame_path = render_dir / f"softlife_replay_{index:04d}.png"
+        if camera_path is not None and not _set_viewport_camera(viewport, camera_path):
+            return None
+        suffix = "" if camera_name is None else f"_{_filename_token(camera_name)}"
+        frame_path = render_dir / f"softlife_replay_{index:04d}{suffix}.png"
         viewport_utility.capture_viewport_to_file(viewport, str(frame_path))
         return frame_path if _wait_for_frame_file(frame_path, app) else None
     except Exception:
         return None
+
+
+def _set_viewport_camera(viewport: Any, camera_path: str) -> bool:
+    values = [camera_path]
+    try:
+        from pxr import Sdf
+
+        values.append(Sdf.Path(camera_path))
+    except Exception:
+        pass
+
+    for method_name in ("set_active_camera", "set_camera_path"):
+        method = getattr(viewport, method_name, None)
+        if method is None:
+            continue
+        for value in values:
+            try:
+                method(value)
+                return True
+            except Exception:
+                continue
+
+    for attr_name in ("camera_path", "cameraPath"):
+        if not hasattr(viewport, attr_name):
+            continue
+        for value in values:
+            try:
+                setattr(viewport, attr_name, value)
+                return True
+            except Exception:
+                continue
+
+    return False
 
 
 def _wait_for_frame_file(frame_path: Path, app: Any, *, attempts: int = 20) -> bool:
@@ -278,6 +383,16 @@ def _write_artifact(artifact: PhysicsReplayArtifact, output_artifact_path: str |
         json.dumps(artifact.to_private_wire(), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+
+
+def _filename_token(value: str) -> str:
+    return "".join(char if char.isalnum() or char in {"_", "-"} else "_" for char in value)
+
+
+def _mapping(value: Any) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise TypeError(f"expected mapping, got {type(value).__name__}")
+    return value
 
 
 def _compiled_commands(bundle_payload: Mapping[str, Any]) -> tuple[Mapping[str, Any], ...]:

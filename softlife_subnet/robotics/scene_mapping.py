@@ -5,6 +5,13 @@ from dataclasses import dataclass
 from softlife_subnet.state import EnvironmentState
 
 
+VALIDATOR_CAMERA_NAMES: tuple[str, ...] = (
+    "wide_validator_camera",
+    "robot_follow_camera",
+    "overhead_audit_camera",
+)
+
+
 @dataclass(frozen=True)
 class HotelRoomSceneManifest:
     """Deterministic symbolic-to-scene mapping for future Isaac Lab adapters."""
@@ -14,6 +21,7 @@ class HotelRoomSceneManifest:
     zone_frames: dict[str, str]
     object_prims: dict[str, str]
     surface_prims: dict[str, str]
+    camera_prims: dict[str, str]
 
     @classmethod
     def from_environment(cls, environment_state: EnvironmentState) -> "HotelRoomSceneManifest":
@@ -33,6 +41,10 @@ class HotelRoomSceneManifest:
                 surface.zone: f"{root}/Surfaces/{_usd_name(surface.zone)}"
                 for surface in environment_state.surfaces
             },
+            camera_prims={
+                camera_name: f"{root}/Cameras/{camera_name}"
+                for camera_name in VALIDATOR_CAMERA_NAMES
+            },
         )
 
     def zone_frame(self, zone: str | None) -> str | None:
@@ -50,6 +62,11 @@ class HotelRoomSceneManifest:
             return None
         return self.surface_prims.get(zone)
 
+    def camera_prim(self, camera_name: str | None) -> str | None:
+        if camera_name is None:
+            return None
+        return self.camera_prims.get(camera_name)
+
     def to_wire(self) -> dict[str, object]:
         return {
             "room_id": self.room_id,
@@ -57,6 +74,7 @@ class HotelRoomSceneManifest:
             "zone_frames": dict(self.zone_frames),
             "object_prims": dict(self.object_prims),
             "surface_prims": dict(self.surface_prims),
+            "camera_prims": dict(self.camera_prims),
         }
 
 

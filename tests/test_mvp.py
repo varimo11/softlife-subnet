@@ -17,6 +17,7 @@ from integrations.isaac_lab.softlife_isaac_lab.isaac_sim_runner import (
     build_stage_level_artifact,
     find_isaac_sim_package,
     run_isaac_sim_stage_replay,
+    validator_camera_paths,
 )
 from integrations.isaac_lab.softlife_isaac_lab.controllers import (
     RobotReplayController,
@@ -57,6 +58,7 @@ from softlife_subnet.robotics import (
     HotelRoomSceneManifest,
     RobotCommandType,
     SoftLifeTrajectoryProvider,
+    VALIDATOR_CAMERA_NAMES,
     build_symbolic_physics_artifact,
 )
 from softlife_subnet.room_generator import RoomGenerator
@@ -277,6 +279,12 @@ class MvpTests(unittest.TestCase):
             len(redacted["compiled_commands"]),
             len(redacted["trajectory"]),
         )
+        camera_prims = redacted["scene_manifest"]["camera_prims"]
+        self.assertEqual(set(camera_prims), set(VALIDATOR_CAMERA_NAMES))
+        self.assertEqual(
+            camera_prims["wide_validator_camera"],
+            "/World/SoftLifeRooms/room_1cf6ab0be52f/Cameras/wide_validator_camera",
+        )
         self.assertNotIn(
             "private_seed",
             json.dumps(redacted["validator_private_state"], sort_keys=True),
@@ -298,6 +306,30 @@ class MvpTests(unittest.TestCase):
         self.assertIn('def Camera "wide_validator_camera"', usda)
         self.assertIn("softlife:asset_hint", usda)
         self.assertIn("room_1cf6ab0be52f", usda)
+
+    def test_isaac_validator_camera_paths_come_from_manifest(self) -> None:
+        bundle = build_isaac_replay_bundle(seed=42).to_wire()
+
+        paths = validator_camera_paths(
+            bundle,
+            camera_names=("wide_validator_camera", "overhead_audit_camera"),
+        )
+
+        self.assertEqual(
+            paths,
+            {
+                "wide_validator_camera": (
+                    "/World/SoftLifeRooms/room_1cf6ab0be52f/"
+                    "Cameras/wide_validator_camera"
+                ),
+                "overhead_audit_camera": (
+                    "/World/SoftLifeRooms/room_1cf6ab0be52f/"
+                    "Cameras/overhead_audit_camera"
+                ),
+            },
+        )
+        with self.assertRaises(ValueError):
+            validator_camera_paths(bundle, camera_names=("unknown_camera",))
 
     def test_isaac_stage_level_replay_artifact_scores_like_validator_replay(self) -> None:
         bundle = build_isaac_replay_bundle(seed=42).to_wire()

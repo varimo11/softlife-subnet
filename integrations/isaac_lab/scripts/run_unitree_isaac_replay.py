@@ -16,6 +16,7 @@ from integrations.isaac_lab.softlife_isaac_lab.unitree_controller import (  # no
     UnitreeIsaacReplayController,
     build_unitree_dry_run_artifact,
 )
+from integrations.isaac_lab.softlife_isaac_lab.scene_spec import CAMERA_NAMES  # noqa: E402
 from integrations.isaac_lab.softlife_isaac_lab.unitree_stage_runner import (  # noqa: E402
     run_unitree_stage_backend_replay,
 )
@@ -30,6 +31,15 @@ def main() -> None:
     parser.add_argument("--scene", help="USDA/USD scene path for --stage-backend. Generated when missing.")
     parser.add_argument("--out-artifact", required=True, help="Output physics artifact JSON path.")
     parser.add_argument("--render-dir", help="Optional viewport frame directory for --stage-backend.")
+    parser.add_argument(
+        "--camera",
+        action="append",
+        choices=CAMERA_NAMES,
+        help=(
+            "Validator camera to capture when --render-dir is set. Repeat to "
+            "select multiple cameras. Defaults to all validator cameras."
+        ),
+    )
     parser.add_argument("--sim-steps", type=int, default=12, help="Simulation steps per command.")
     parser.add_argument(
         "--dry-run",
@@ -70,6 +80,7 @@ def main() -> None:
                 bundle_payload,
                 scene_path=args.scene or str(_default_scene_path(args.out_artifact)),
                 render_dir=args.render_dir,
+                camera_names=args.camera,
                 sim_steps=args.sim_steps,
                 headless=not args.show,
             )

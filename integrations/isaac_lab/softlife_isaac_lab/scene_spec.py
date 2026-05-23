@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from softlife_subnet.robotics import VALIDATOR_CAMERA_NAMES
+
 
 HOTEL_ROOM_ZONES: tuple[str, ...] = (
     "entry",
@@ -25,11 +27,7 @@ OBJECT_KIND_TO_ASSET_HINT: dict[str, str] = {
 }
 
 
-CAMERA_NAMES: tuple[str, ...] = (
-    "wide_validator_camera",
-    "robot_follow_camera",
-    "overhead_audit_camera",
-)
+CAMERA_NAMES: tuple[str, ...] = VALIDATOR_CAMERA_NAMES
 
 ZONE_POSES: dict[str, tuple[float, float, float]] = {
     "entry": (-3.2, -2.4, 0.0),

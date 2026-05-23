@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 from integrations.isaac_lab.softlife_isaac_lab.isaac_sim_runner import (
-    _capture_viewport_frame,
+    _capture_validator_camera_frames,
     _compiled_commands,
     _create_simulation_app,
     _current_stage,
@@ -34,6 +34,7 @@ def run_unitree_stage_backend_replay(
     *,
     scene_path: str | Path | None = None,
     render_dir: str | Path | None = None,
+    camera_names: Iterable[str] | None = None,
     sim_steps: int = 12,
     headless: bool = True,
 ) -> UnitreeStageReplayResult:
@@ -76,9 +77,15 @@ def run_unitree_stage_backend_replay(
                 controller.execute(command, sim_steps=sim_steps)
                 _step_app(app, sim_steps)
                 if frame_dir is not None:
-                    frame = _capture_viewport_frame(frame_dir, index, app)
-                    if frame is not None:
-                        rendered_frames.append(frame)
+                    rendered_frames.extend(
+                        _capture_validator_camera_frames(
+                            frame_dir,
+                            index,
+                            app,
+                            bundle_payload=bundle_payload,
+                            camera_names=camera_names,
+                        )
+                    )
 
             artifact = controller.to_artifact(
                 adapter_name="unitree_isaac_stage_backend_v1",
